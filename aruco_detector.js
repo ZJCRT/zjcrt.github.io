@@ -1,6 +1,6 @@
 // In this case, We set width 320, and the height will be computed based on the input stream.
-let width = 320;
-let height = 0;
+let width = 640;
+let height = 480;
 
 // whether streaming video from the camera.
 let streaming = false;
@@ -54,7 +54,7 @@ function startup() {
     checkbox = document.getElementById("checkbox");
     start = document.getElementById("startup");
     stop = document.getElementById("stop");
-
+    // start camera
     navigator.mediaDevices.getUserMedia({ video: {facingMode: "environment"}, audio: false })
         .then(function(s) {
             stream = s;
@@ -73,13 +73,13 @@ function playVideo() {
         console.warn("Please startup your webcam");
         return;
     }
-    let text = document.getElementById("TestCode").value;
-    try {
-        eval(text);
-        document.getElementById("vdErr").innerHTML = " ";
-    } catch(err) {
-        document.getElementById("vdErr").innerHTML = err;
-    }
+    // let text = document.getElementById("TestCode").value;
+    // try {
+    //     eval(text);
+    //     document.getElementById("vdErr").innerHTML = " ";
+    // } catch(err) {
+    //     document.getElementById("vdErr").innerHTML = err;
+    // }
     start.disabled = true;
 }
 
@@ -140,6 +140,7 @@ function stopCamera() {
 function onReady() {
     document.getElementById("startup").disabled = false;
 }
+
 if (typeof cv !== 'undefined') {
     onReady();
 } else {
@@ -155,8 +156,8 @@ markerImage = new cv.Mat();
 //dictionary.bytesList.delete();
 //// dictionary.bytesList = cv.matFromArray(1, 2, cv.CV_8UC4, [197, 71,  81, 248, 226, 163, 31, 138]);
 //dictionary.bytesList = cv.matFromArray(1, 2, cv.CV_8UC4, [177, 0, 135, 0, 70, 1, 112, 1]);
-let dictionary = new cv.Dictionary(cv.DICT_6X6_250);
-let parameter = new cv.DetectorParameters();
+dictionary = new cv.Dictionary(cv.DICT_6X6_250);
+parameter = new cv.DetectorParameters();
 
 // parameter.adaptiveThreshWinSizeMin = 3,
 parameter.adaptiveThreshWinSizeMin = 23;
@@ -196,28 +197,35 @@ let cy = 1080.0 / 2.0;
 cameraMatrix = cv.matFromArray(3, 3, cv.CV_64F, 
                                 [9.6635571716090658e+02, 0., 2.0679307818305685e+02, 0.,
                                  9.6635571716090658e+02, 2.9370020600555273e+02, 0., 0., 1.]);
-let distCoeffs = cv.matFromArray(5, 1, cv.CV_64F, [0.0,0.0,0.0,0.0,0.0]);
+distCoeffs = cv.matFromArray(5, 1, cv.CV_64F, [0.0,0.0,0.0,0.0,0.0]);
 // "video" is the id of the video tag
-let cap = new cv.VideoCapture("video");
+
 loopIndex = setInterval(
     function(){
-        cap.read(inputImage);
         if (checkbox.checked) {
+            // disable video showing on left side
+            document.getElementById("video").style.display="none";
 
+            let cap = new cv.VideoCapture("video");
+            cap.read(inputImage);
             cv.cvtColor(inputImage, RgbImage, cv.COLOR_RGBA2RGB, 0);
+            startTime = performance.now();
             cv.detectMarkers(RgbImage, dictionary, markerCorners, markerIds, parameter);
+            endTime = performance.now();    
+            // if (markerIds.rows > 0) {
+            //     cv.drawDetectedMarkers(RgbImage, markerCorners, markerIds);
+            //     cv.estimatePoseSingleMarkers(markerCorners, 0.1, cameraMatrix, distCoeffs, rvecs, tvecs);
+            //     for(let i=0; i < markerIds.rows; ++i) {
+            //         let rvec = cv.matFromArray(3, 1, cv.CV_64F, [rvecs.doublePtr(0, i)[0], rvecs.doublePtr(0, i)[1], rvecs.doublePtr(0, i)[2]]);
+            //         let tvec = cv.matFromArray(3, 1, cv.CV_64F, [tvecs.doublePtr(0, i)[0], tvecs.doublePtr(0, i)[1], tvecs.doublePtr(0, i)[2]]);
+            //         cv.drawAxis(RgbImage, cameraMatrix, distCoeffs, rvec, tvec, 0.1);
+            //         rvec.delete();
+            //         tvec.delete();
+            //     }
+            // }
 
-            if (markerIds.rows > 0) {
-                cv.drawDetectedMarkers(RgbImage, markerCorners, markerIds);
-                cv.estimatePoseSingleMarkers(markerCorners, 0.1, cameraMatrix, distCoeffs, rvecs, tvecs);
-                for(let i=0; i < markerIds.rows; ++i) {
-                    let rvec = cv.matFromArray(3, 1, cv.CV_64F, [rvecs.doublePtr(0, i)[0], rvecs.doublePtr(0, i)[1], rvecs.doublePtr(0, i)[2]]);
-                    let tvec = cv.matFromArray(3, 1, cv.CV_64F, [tvecs.doublePtr(0, i)[0], tvecs.doublePtr(0, i)[1], tvecs.doublePtr(0, i)[2]]);
-                    cv.drawAxis(RgbImage, cameraMatrix, distCoeffs, rvec, tvec, 0.1);
-                    rvec.delete();
-                    tvec.delete();
-                }
-            }
+            var timeDiff = endTime - startTime; //in ms 
+            document.getElementById("framerate").innerHTML = (1000.0 / timeDiff).toFixed(2) + " FPS";
             cv.imshow("canvasOutput", RgbImage);
         }
         else
