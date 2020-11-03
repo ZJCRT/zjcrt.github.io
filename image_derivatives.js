@@ -51,10 +51,7 @@ function startup() {
     });
 
     video.addEventListener("canplay", initVideo, false);
-    // if wasm is used this is necessarys
-    cv['onRuntimeInitialized']=()=>{
-        main();
-    };
+    main();
 }
 
 function playVideo() {
