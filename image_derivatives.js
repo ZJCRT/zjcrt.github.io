@@ -1,6 +1,6 @@
 // In this case, We set width 320, and the height will be computed based on the input stream.
-let width = 320;
-let height = 240;
+let width = 1920;
+let height = 1080;
 
 // whether streaming video from the camera.
 let streaming = false;
