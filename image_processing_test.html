@@ -6,6 +6,9 @@
             video {
                 border: 1px solid black;
             }
+            canvasOutput {
+                border: 1px solid black;
+            }
             .err {
                 color: red;
             }
@@ -17,8 +20,8 @@
     </div>
     <div id="contentarea">
         <button class="btn btn-outline-success" role="button" id="startup" disabled="true" onclick="startup()">Start</button>
-        <!--<input type="checkbox" id="checkbox" disabled="true">Enable Processing</input>-->
         <button class="btn btn-outline-danger" role="button" id="stop" disabled="true" onclick="stopCamera()">stop</button><br>
+        Video size: <p id="vwidth">0</p> pixel, <p id="vheight">0</p>pixel
         <video id="video">Your browser does not support the video tag.</video>
         <canvas id="canvasOutput"></canvas>
         <br>Aruco marker detection speed: <p id="framerate">0 FPS</p>
