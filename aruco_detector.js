@@ -156,7 +156,7 @@ markerImage = new cv.Mat();
 //dictionary.bytesList.delete();
 //// dictionary.bytesList = cv.matFromArray(1, 2, cv.CV_8UC4, [197, 71,  81, 248, 226, 163, 31, 138]);
 //dictionary.bytesList = cv.matFromArray(1, 2, cv.CV_8UC4, [177, 0, 135, 0, 70, 1, 112, 1]);
-dictionary = new cv.Dictionary(cv.DICT_6X6_250);
+dictionary = new cv.Dictionary(cv.DICT_ARUCO_ORIGINAL);
 parameter = new cv.DetectorParameters();
 
 // parameter.adaptiveThreshWinSizeMin = 3,
@@ -212,20 +212,22 @@ loopIndex = setInterval(
             startTime = performance.now();
             cv.detectMarkers(RgbImage, dictionary, markerCorners, markerIds, parameter);
             endTime = performance.now();    
-            // if (markerIds.rows > 0) {
-            //     cv.drawDetectedMarkers(RgbImage, markerCorners, markerIds);
-            //     cv.estimatePoseSingleMarkers(markerCorners, 0.1, cameraMatrix, distCoeffs, rvecs, tvecs);
-            //     for(let i=0; i < markerIds.rows; ++i) {
-            //         let rvec = cv.matFromArray(3, 1, cv.CV_64F, [rvecs.doublePtr(0, i)[0], rvecs.doublePtr(0, i)[1], rvecs.doublePtr(0, i)[2]]);
-            //         let tvec = cv.matFromArray(3, 1, cv.CV_64F, [tvecs.doublePtr(0, i)[0], tvecs.doublePtr(0, i)[1], tvecs.doublePtr(0, i)[2]]);
-            //         cv.drawAxis(RgbImage, cameraMatrix, distCoeffs, rvec, tvec, 0.1);
-            //         rvec.delete();
-            //         tvec.delete();
-            //     }
-            // }
+            if (markerIds.rows > 0) {
+                cv.drawDetectedMarkers(RgbImage, markerCorners, markerIds);
+                cv.estimatePoseSingleMarkers(markerCorners, 0.1, cameraMatrix, distCoeffs, rvecs, tvecs);
+                for(let i=0; i < markerIds.rows; ++i) {
+                    let rvec = cv.matFromArray(3, 1, cv.CV_64F, [rvecs.doublePtr(0, i)[0], rvecs.doublePtr(0, i)[1], rvecs.doublePtr(0, i)[2]]);
+                    let tvec = cv.matFromArray(3, 1, cv.CV_64F, [tvecs.doublePtr(0, i)[0], tvecs.doublePtr(0, i)[1], tvecs.doublePtr(0, i)[2]]);
+                    cv.drawAxis(RgbImage, cameraMatrix, distCoeffs, rvec, tvec, 0.1);
+                    rvec.delete();
+                    tvec.delete();
+                }
+            }
 
             var timeDiff = endTime - startTime; //in ms 
             document.getElementById("framerate").innerHTML = (1000.0 / timeDiff).toFixed(2) + " FPS";
+            document.getElementById("nrdetectedmarkers").innerHTML = markerIds.rows;
+
             cv.imshow("canvasOutput", RgbImage);
         }
         else
