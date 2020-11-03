@@ -1,0 +1,29 @@
+<html>
+    <head>
+        <style>
+            canvas {
+                border: 1px solid black;
+            }
+            video {
+                border: 1px solid black;
+            }
+            .err {
+                color: red;
+            }
+            </style>
+    </head>
+
+    <body>
+    <p class="err" id="vdErr"></p>
+    </div>
+    <div id="contentarea">
+        <button id="startup" disabled="true" onclick="startup()">start</button>
+        <input type="checkbox" id="checkbox" disabled="true"">processing</input>
+        <button id="stop" disabled="true" onclick="stopCamera()">stop</button><br>
+        <video id="video">Your browser does not support the video tag.</video>
+        <canvas id="canvasOutput"></canvas>
+    </div> 
+    </body>
+    <script async src="wasm/opencv.js" id="opencvjs"></script>
+    <script src="aruco_detector.js"></script>
+</html>
