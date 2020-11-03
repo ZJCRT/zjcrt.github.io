@@ -1,10 +1,13 @@
+// import function
+import laplacian from './laplacian_loop.js'
+import aruco from './aruco_detector_loop.js'
 
 
 
 // In this case, We set width 320, and the height will be computed based on the input stream.
 let width = 0;
 let height = 0;
-
+let size_initialized = false;
 // whether streaming video from the camera.
 let streaming = false;
 
@@ -15,18 +18,6 @@ let stop = null;
 let stream = null;
 
 let loopIndex = 0;
-
-let inputImage = null;
-let markerImage = null;
-let dictionary = null;
-let parameter = null;
-let markerIds = null;
-let markerCorners = null;
-let rvecs  = null;
-let tvecs = null;
-let RgbImage = null;
-let cameraMatrix  = null;
-let distCoeffs = null;
 
 function read(a) {
     alert(a);
@@ -39,7 +30,6 @@ function load() {
     qrcode.decode(dataURL);
 }
 
-
 function initVideo(ev){
     if (!streaming) {
         height = video.videoHeight;
@@ -48,13 +38,14 @@ function initVideo(ev){
         video.setAttribute("height", height);
 
         document.getElementById("imgsize").innerHTML = "Video size (w,h): " + width + " , " + height + " pixel";
+
         streaming = true;
     }
     stop.disabled = false;
     playVideo();
 }
 
-function startup() {
+function startup(mode) {
     video = document.getElementById("video");
     start = document.getElementById("startup");
     stop = document.getElementById("stop");
@@ -85,7 +76,11 @@ function playVideo() {
     //     document.getElementById("vdErr").innerHTML = err;
     // }
     start.disabled = true;
-    main();
+    if (document.getElementById("aruco_test_content")) {
+        laplacian(height, width);
+    } else if (document.getElementById("laplacian_test_content")) {
+        aruco(heigh, width)
+    }
 }
 
 function stopCamera() {
@@ -134,6 +129,14 @@ function stopCamera() {
         distCoeffs.delete();
         distCoeffs = null;
     }
+    if (grayImage != null && !grayImage.isDeleted()) {
+        grayImage.delete();
+        grayImage = null;
+    }
+    if (laplacianImage != null && !laplacianImage.isDeleted()) {
+        laplacianImage.delete();
+        laplacianImage = null;
+    }
     document.getElementById("canvasOutput").getContext("2d").clearRect(0, 0, width, height);
     video.pause();
     video.srcObject = null;
@@ -144,7 +147,6 @@ function stopCamera() {
 
 function onReady() {
     document.getElementById("startup").disabled = false;
-
 }
 
 if (typeof cv !== 'undefined') {
@@ -152,8 +154,4 @@ if (typeof cv !== 'undefined') {
 } else {
     document.getElementById("opencvjs").onload = onReady;
 }
-
-
-
-
 

@@ -7,7 +7,7 @@
     <div>
         <p class="err" id="vdErr"></p>
     </div>
-    <div id="contentarea">
+    <div id="laplacian_test_content">
         <button class="btn btn-outline-success" role="button" id="startup" disabled="true" onclick="startup()">Start</button>
         <button class="btn btn-outline-danger" role="button" id="stop" disabled="true" onclick="stopCamera()">stop</button><br><br>
         <p id="imgsize">Video size: 0x0 pixel</p><br>
@@ -18,6 +18,6 @@
     <br>Laplacian framerate: <p id="framerate">0 FPS</p>
     </body>
     <script async src="asm/opencv.js" id="opencvjs"></script>
-    <script src="image_derivatives.js"></script>
+    <script type="module" src="main.js"></script>
     <script src="three.min.js"></script>
 </htm>
