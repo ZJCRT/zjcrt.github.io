@@ -155,7 +155,7 @@ function main() {
             function(){
                 // disable video showing on left side
                 // disable video showing on left side
-                //document.getElementById("video").style.display="none";
+                document.getElementById("video").style.display="none";
                 let cap = new cv.VideoCapture("video");
                 cap.read(inputImage);
                 startTime = performance.now();
