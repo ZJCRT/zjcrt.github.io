@@ -63,7 +63,6 @@ function startup() {
     });
 
     video.addEventListener("canplay", initVideo, false);
-    main();
 }
 
 function playVideo() {
@@ -79,6 +78,7 @@ function playVideo() {
     //     document.getElementById("vdErr").innerHTML = err;
     // }
     start.disabled = true;
+    main();
 }
 
 function stopCamera() {
