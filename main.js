@@ -1,6 +1,6 @@
 // import function
-import laplacian from './laplacian_loop.js'
-import aruco from './aruco_detector_loop.js'
+import {laplacian} from './laplacian_loop.js'
+import {aruco} from './aruco_detector_loop.js'
 
 
 
