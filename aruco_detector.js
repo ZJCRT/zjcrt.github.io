@@ -47,8 +47,7 @@ function initVideo(ev){
         video.setAttribute("width", width);
         video.setAttribute("height", height);
 
-        document.getElementById("vheight").innerHTML = height;
-        document.getElementById("vwidth").innerHTML  = width;
+        document.getElementById("imgsize").innerHTML = "Video size (w,h): " + width + " , " + height + " pixel";
         streaming = true;
     }
     stop.disabled = false;

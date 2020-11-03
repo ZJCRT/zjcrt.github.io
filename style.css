@@ -1,0 +1,14 @@
+video {
+    border: 1px solid black;
+}
+canvasOutput {
+    border: 1px solid black;
+}
+.err {
+    color: red;
+}            
+#imagesize p {
+    margin: 0;
+    display: inline;
+    float: left
+}
