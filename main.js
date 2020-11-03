@@ -45,7 +45,7 @@ function initVideo(ev){
     playVideo();
 }
 
-function startup(mode) {
+function startup() {
     video = document.getElementById("video");
     start = document.getElementById("startup");
     stop = document.getElementById("stop");
