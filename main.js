@@ -28,7 +28,7 @@ let grayImage = null;
 let rvecs = null;
 let tvecs = null;
 
-
+let run_interval = 30; // fps
 
 function read(a) {
     alert(a);
@@ -56,12 +56,21 @@ function initVideo(ev){
     }
 }
 
+var constraints = {
+    audio: false,
+    video: {
+        facingMode: "environment",
+        width: { min: 640, max: 1920 },
+        height: { min: 480, max: 1080 },
+    },
+};
+
 function startup() {
     video = document.getElementById("video");
     start = document.getElementById("startup");
     stop = document.getElementById("stop");
     // start camera
-    navigator.mediaDevices.getUserMedia({ video: {facingMode: "environment"}, audio: false })
+    navigator.mediaDevices.getUserMedia(constraints)
         .then(function(s) {
             stream = s;
             video.srcObject = stream;
@@ -128,10 +137,14 @@ function aruco() {
 
             cap = new cv.VideoCapture("video");
             cap.read(inputImage);
-            cv.cvtColor(inputImage, RgbImage, cv.COLOR_RGBA2RGB, 0);
+
             let startTime = performance.now();
+
+            cv.cvtColor(inputImage, RgbImage, cv.COLOR_RGBA2RGB, 0);
             cv.detectMarkers(RgbImage, dictionary, markerCorners, markerIds, parameter);
+
             let endTime = performance.now();    
+
             if (markerIds.rows > 0) {
                 cv.drawDetectedMarkers(RgbImage, markerCorners, markerIds);
                 cv.estimatePoseSingleMarkers(markerCorners, 0.1, cameraMatrix, distCoeffs, rvecs, tvecs);
@@ -152,7 +165,7 @@ function aruco() {
             document.getElementById("nrdetectedmarkers").innerHTML = markerIds.rows;
 
             cv.imshow("canvasOutput", RgbImage);
-        }, 33);
+        }, run_interval);
 
 }
 
@@ -169,7 +182,9 @@ function laplacian() {
             document.getElementById("video").style.display="none";
             let cap = new cv.VideoCapture("video");
             cap.read(inputImage);
+
             let startTime = performance.now();
+
             cv.cvtColor(inputImage, grayImage, cv.COLOR_RGBA2GRAY, 0); 
             cv.Laplacian(grayImage, laplacianImage, cv.CV_8UC1)
 
@@ -180,7 +195,7 @@ function laplacian() {
 
             cv.imshow("canvasOutput", laplacianImage);
         
-        }, 30);
+        }, run_interval);
         
 
 }
@@ -195,19 +210,15 @@ function laplacian() {
         return;
     }
 
-    //cv['onRuntimeInitialized']=()=>{
-        //console.log(cv.getBuildInformation());
-        // inputImage are declared and deleted elsewhere
-        inputImage = new cv.Mat(height, width, cv.CV_8UC4);
+    inputImage = new cv.Mat(height, width, cv.CV_8UC4);
 
-    
-        start.disabled = true;
-        if (document.getElementById("aruco_test_content")) {
-            aruco();
-        } else if (document.getElementById("laplacian_test_content")) {
-            laplacian();
-        }
-    //};
+
+    start.disabled = true;
+    // if (document.getElementById("aruco_test_content")) {
+    //     aruco();
+    // } else if (document.getElementById("laplacian_test_content")) {
+    //     laplacian();
+    // }
 }
 
 function stopCamera() {
