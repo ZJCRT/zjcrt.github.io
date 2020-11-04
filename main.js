@@ -25,8 +25,9 @@ let laplacianImage = null;
 let cameraMatrix = null;
 let distCoeffs = null;
 let grayImage = null;
-let rvecs = null;
-let tvecs = null;
+let rvec = null;
+let tvec = null;
+let board = null;
 
 let run_interval = 30; // fps
 
@@ -87,32 +88,33 @@ function aruco() {
     // inputImage are declared and deleted elsewhere
     markerImage = new cv.Mat();
     dictionary = new cv.aruco_Dictionary(cv.DICT_ARUCO_ORIGINAL);
-    parameter = new cv.DetectorParameters();
+    //parameter = new cv.DetectorParameters();
+    board = new cv.aruco_GridBoard(2,2, 0.08, 0.02, dictionary);
 
-    // parameter.adaptiveThreshWinSizeMin = 3,
-    parameter.adaptiveThreshWinSizeMin = 23;
-    // parameter.adaptiveThreshWinSizeMax = 23,
-    parameter.adaptiveThreshWinSizeMax = 23;
-    parameter.adaptiveThreshWinSizeStep = 10,
-    parameter.adaptiveThreshConstant = 7;
-    // parameter.minMarkerPerimeterRate = 0.03;
-    parameter.minMarkerPerimeterRate = 0.1;
-    parameter.maxMarkerPerimeterRate = 4;
-    parameter.polygonalApproxAccuracyRate = 0.03;
-    parameter.minCornerDistanceRate = 0.05;
-    parameter.minDistanceToBorder = 3;
-    parameter.minMarkerDistanceRate = 0.05;
-    parameter.cornerRefinementMethod = cv.CORNER_REFINE_SUBPIX; // CORNER_REFINE_NONE
-    parameter.cornerRefinementWinSize = 5;
-    parameter.cornerRefinementMaxIterations = 10;
-    parameter.cornerRefinementMinAccuracy = 0.1;
-    parameter.markerBorderBits = 1;
-    // parameter.perspectiveRemovePixelPerCell = 4;
-    parameter.perspectiveRemovePixelPerCell = 2;
-    parameter.perspectiveRemoveIgnoredMarginPerCell = 0.13;
-    parameter.maxErroneousBitsInBorderRate = 0.35;
-    parameter.minOtsuStdDev = 5.0;
-    parameter.errorCorrectionRate = 0.6;
+    // // parameter.adaptiveThreshWinSizeMin = 3,
+    // parameter.adaptiveThreshWinSizeMin = 23;
+    // // parameter.adaptiveThreshWinSizeMax = 23,
+    // parameter.adaptiveThreshWinSizeMax = 23;
+    // parameter.adaptiveThreshWinSizeStep = 10,
+    // parameter.adaptiveThreshConstant = 7;
+    // // parameter.minMarkerPerimeterRate = 0.03;
+    // parameter.minMarkerPerimeterRate = 0.1;
+    // parameter.maxMarkerPerimeterRate = 4;
+    // parameter.polygonalApproxAccuracyRate = 0.03;
+    // parameter.minCornerDistanceRate = 0.05;
+    // parameter.minDistanceToBorder = 3;
+    // parameter.minMarkerDistanceRate = 0.05;
+    // parameter.cornerRefinementMethod = cv.CORNER_REFINE_SUBPIX; // CORNER_REFINE_NONE
+    // parameter.cornerRefinementWinSize = 5;
+    // parameter.cornerRefinementMaxIterations = 10;
+    // parameter.cornerRefinementMinAccuracy = 0.1;
+    // parameter.markerBorderBits = 1;
+    // // parameter.perspectiveRemovePixelPerCell = 4;
+    // parameter.perspectiveRemovePixelPerCell = 2;
+    // parameter.perspectiveRemoveIgnoredMarginPerCell = 0.13;
+    // parameter.maxErroneousBitsInBorderRate = 0.35;
+    // parameter.minOtsuStdDev = 5.0;
+    // parameter.errorCorrectionRate = 0.6;
 
     markerIds = new cv.Mat();
     markerCorners  = new cv.MatVector();
@@ -141,23 +143,23 @@ function aruco() {
             let startTime = performance.now();
 
             cv.cvtColor(inputImage, RgbImage, cv.COLOR_RGBA2RGB, 0);
-            cv.detectMarkers(RgbImage, dictionary, markerCorners, markerIds, parameter);
+            cv.detectMarkers(RgbImage, dictionary, markerCorners, markerIds);
 
             let endTime = performance.now();    
 
             if (markerIds.rows > 0) {
+
                 cv.drawDetectedMarkers(RgbImage, markerCorners, markerIds);
-                cv.estimatePoseSingleMarkers(markerCorners, 0.1, cameraMatrix, distCoeffs, rvecs, tvecs);
-                for(let i=0; i < markerIds.rows; ++i) {
-                    let rvec = cv.matFromArray(3, 1, cv.CV_64F, [rvecs.doublePtr(0, i)[0], rvecs.doublePtr(0, i)[1], rvecs.doublePtr(0, i)[2]]);
-                    let tvec = cv.matFromArray(3, 1, cv.CV_64F, [tvecs.doublePtr(0, i)[0], tvecs.doublePtr(0, i)[1], tvecs.doublePtr(0, i)[2]]);
-                    cv.drawAxis(RgbImage, cameraMatrix, distCoeffs, rvec, tvec, 0.1);
-                    let rotationMat = new cv.Mat();
-                    cv.Rodrigues(rvec, rotationMat);
-                    rotationMat.delete();
-                    rvec.delete();
-                    tvec.delete();
-                }
+                // valid = cv.estimatePoseBoard(markerCorners, markerIds, board, cameraMatrix, distCoeffs, rvec, tvec);
+                // let rotationMat = new cv.Mat();
+                // if (valid) {
+                    
+                //     cv.Rodrigues(rvec, rotationMat);
+                //     cv.drawAxis(RgbImage, cameraMatrix, distCoeffs, rvec, tvec, 0.1);
+                // }
+                // rotationMat.delete();
+                // rvec.delete();
+                // tvec.delete();
             }
             
             var timeDiff = endTime - startTime; //in ms 
@@ -200,10 +202,6 @@ function laplacian() {
 
 }
 
-// function sleep(ms) {
-//     return new Promise(resolve => setTimeout(resolve, ms));
-//  }
-
  function  playVideo() {
     if (!streaming) {
         console.warn("Please startup your webcam");
@@ -214,11 +212,11 @@ function laplacian() {
 
 
     start.disabled = true;
-    // if (document.getElementById("aruco_test_content")) {
-    //     aruco();
-    // } else if (document.getElementById("laplacian_test_content")) {
-    //     laplacian();
-    // }
+    if (document.getElementById("aruco_test_content")) {
+        aruco();
+    } else if (document.getElementById("laplacian_test_content")) {
+        laplacian();
+    }
 }
 
 function stopCamera() {
@@ -271,14 +269,15 @@ function stopCamera() {
         grayImage.delete();
         grayImage = null;
     }
-    if (cap != null && !cap.isDeleted()) {
-        cap.delete();
-        cap = null;
-    }
     if (laplacianImage != null && !laplacianImage.isDeleted()) {
         laplacianImage.delete();
         laplacianImage = null;
     }
+    if (board != null && !board.isDeleted()) {
+        board.delete();
+        board = null;
+    }
+
     document.getElementById("canvasOutput").getContext("2d").clearRect(0, 0, width, height);
     video.pause();
     video.srcObject = null;
