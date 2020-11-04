@@ -90,8 +90,8 @@ var constraints = {
     audio: false,
     video: {
         facingMode: "environment",
-        width: { min: 640, max: 1920 },
-        height: { min: 480, max: 1080 },
+        width: { min: 320, max: 320 },
+        height: { min: 240, max: 240 },
     },
 };
 
