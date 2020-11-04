@@ -1,15 +1,15 @@
-export function aruco() {
+export function aruco(height, width) {
     // inputImage are declared and deleted elsewhere
-    inputImage = new cv.Mat(height, width, cv.CV_8UC4);
-    markerImage = new cv.Mat();
+    let inputImage = new cv.Mat(height, width, cv.CV_8UC4);
+    let markerImage = new cv.Mat();
     //dictionary = new cv.Dictionary(0);
     //dictionary.markerSize = 3;
     //dictionary.maxCorrectionBits = 1;
     //dictionary.bytesList.delete();
     //// dictionary.bytesList = cv.matFromArray(1, 2, cv.CV_8UC4, [197, 71,  81, 248, 226, 163, 31, 138]);
     //dictionary.bytesList = cv.matFromArray(1, 2, cv.CV_8UC4, [177, 0, 135, 0, 70, 1, 112, 1]);
-    dictionary = new cv.Dictionary(cv.DICT_ARUCO_ORIGINAL);
-    parameter = new cv.DetectorParameters();
+    let dictionary = new cv.Dictionary(cv.DICT_ARUCO_ORIGINAL);
+    let parameter = new cv.DetectorParameters();
 
     // parameter.adaptiveThreshWinSizeMin = 3,
     parameter.adaptiveThreshWinSizeMin = 23;
@@ -36,11 +36,11 @@ export function aruco() {
     parameter.minOtsuStdDev = 5.0;
     parameter.errorCorrectionRate = 0.6;
 
-    markerIds = new cv.Mat();
-    markerCorners  = new cv.MatVector();
-    rvecs = new cv.Mat();
-    tvecs = new cv.Mat();
-    RgbImage = new cv.Mat();
+    let markerIds = new cv.Mat();
+    let markerCorners  = new cv.MatVector();
+    let rvecs = new cv.Mat();
+    let tvecs = new cv.Mat();
+    let RgbImage = new cv.Mat();
     let fx = 1.2*width;
     let fy = 1.2*width;
     let cx = width / 2.0;
