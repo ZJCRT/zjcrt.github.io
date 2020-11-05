@@ -248,7 +248,7 @@ function aruco() {
     fielf_of_view_render_cam = 2.0 * Math.atan(width / (2*fx)) * 180.0 / Math.PI;
     document.getElementById("FoV").innerHTML = fielf_of_view_render_cam + " degree.";
     render_camera = new THREE.PerspectiveCamera(fielf_of_view_render_cam, width/height, 0.01, 2 );
-
+    
 // webcam steffen ubuntu laptop
 //     camera matrix:
 //     [[603.85528766   0.         317.48109738]
@@ -296,15 +296,15 @@ function aruco() {
                 let objPointsCV = cv.matFromArray(nrDetectedPts, 3, cv.CV_32F, objPtsJs)
                 let cornerPtsCV = cv.matFromArray(nrDetectedPts, 2, cv.CV_32F, cornersJs)
 
-                //let pts3_cont_vec = new cv.MatVector();
-                //let pts2_cont_vec = new cv.MatVector();
+                let pts3_cont_vec = new cv.MatVector();
+                let pts2_cont_vec = new cv.MatVector();
                 // for (let p = 0; p < nrDetectedPts; ++p) {
                 //     pts3_cont_vec.push_back(objPointsCV.row(p).t().clone());
                 //     pts2_cont_vec.push_back(cornerPtsCV.row(p).t().clone());
                 // }
 
-                //pts3_cont_vec.push_back(objPointsCV.t().clone());
-                //pts2_cont_vec.push_back(cornerPtsCV.t().clone());
+                pts3_cont_vec.push_back(objPointsCV.clone());
+                pts2_cont_vec.push_back(cornerPtsCV.clone());
 
                 let rvec = new cv.Mat();
                 let tvec = new cv.Mat();
@@ -316,8 +316,8 @@ function aruco() {
                     
                     let img_size = new cv.Size(width, height);
                     let cam_mat = new cv.Mat();
-                    //cam_mat = cv.initCameraMatrix2D(pts3_cont_vec, pts2_cont_vec, img_size);
-
+                    cam_mat = cv.initCameraMatrix2D(pts3_cont_vec, pts2_cont_vec, img_size);
+                    document.getElementById("estK").innerHTML = "Estimated camera parameters (f, cx, cy): " + cam_mat.doubleAt(0,0) + "," + cam_mat.doubleAt(0,2) + "," + cam_mat.doubleAt(1,2);
 
                     cv.Rodrigues(rvec, R_cv);
                     cv.drawAxis(RgbImage, cameraMatrix, distCoeffs, rvec, tvec, 0.1);
