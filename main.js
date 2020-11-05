@@ -49,6 +49,7 @@ let render_camera = null;
 const geometry = new THREE.BoxGeometry(0.08,0.08,0.08);
 const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
 const cube = new THREE.Mesh( geometry, material );
+cube.position.set(0,0,0);
 scene.add(cube);
  
 
@@ -357,9 +358,8 @@ function aruco() {
                     console.log(render_camera.quaternion)
                     console.log(render_camera.position)
 
-                    render();
                     upate_video_context();
-
+                    render();
                 }
                 R_cv.delete();
                 rvec.delete();
@@ -429,7 +429,7 @@ function  playVideo() {
     bufferTexture = new THREE.WebGLRenderTarget(width, height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
     renderer.setSize(width, height);
     //document.body.appendChild( renderer.domElement );
-    render_camera = new THREE.PerspectiveCamera( 75, width/height, 0.01, 10 );
+    render_camera = new THREE.PerspectiveCamera( 90, width/height, 0.01, 10 );
 
     start.disabled = true;
     if (document.getElementById("aruco_test_content")) {
