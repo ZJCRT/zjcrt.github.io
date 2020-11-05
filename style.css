@@ -12,3 +12,24 @@ canvasOutput {
     display: inline;
     float: left
 }
+
+#container {
+    position: relative;
+    width: 320px;
+    height:240px;
+}
+#video_canvas{
+    position:absolute;
+    left:0;
+    top:0;
+    width:100%;
+    height:100%;
+
+}
+#threejs_canvas{
+    position:absolute;
+    left:0;
+    top:0;
+    width:100%;
+    height:100%;
+}

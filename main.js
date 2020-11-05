@@ -34,9 +34,15 @@ let run_interval = 30; // fps
 
 // setup a basic scene
 let scene = new THREE.Scene();
-const canvas = document.querySelector('#video_input');
 
-let renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true } ); 
+let threejsImage = document.getElementById('threejs_canvas');
+let videoImage = document.getElementById('video_canvas');
+var videoImageContext = videoImage.getContext("2d");
+
+let renderer = new THREE.WebGLRenderer({canvas: threejsImage, alpha: true } ); 
+let videoDom = document.getElementById('video');
+
+
 renderer.shadowMap.enabled = true;
 let render_camera = null;
 //// This is where we create our off-screen render target ////
@@ -58,6 +64,7 @@ function render() {
     // Render onto our off-screen texture
     // renderer.render(bufferScene, camera, bufferTexture);
     // Finally, draw to the screen
+
     renderer.render( scene, camera );
 }
 
@@ -81,6 +88,7 @@ function initVideo(ev){
         video.setAttribute("height", height);
 
         document.getElementById("imgsize").innerHTML = "Video size (w,h): " + width + " , " + height + " pixel";
+        videoImageContext.clearRect(0, 0, width, height);
 
         streaming = true;
         stop.disabled = false;
@@ -154,6 +162,11 @@ function TransformToWebGlPose(pose, correctionMatrix) {
 		0, 0, 0, 1);
 	pose.matrix = converted;
 	return pose;
+}
+
+function upate_video_context() {
+    videoImageContext.drawImage(videoDom, 0,0);
+    requestAnimationFrame(upate_video_context); // wait for the browser to be ready to present another animation fram.       
 }
 
 function aruco() {
@@ -274,8 +287,18 @@ function aruco() {
                      }
                 }
     
-                let objPointsCV = cv.matFromArray(nrDetectedPts, 3, cv.CV_64F, objPtsJs)
-                let cornerPtsCV = cv.matFromArray(nrDetectedPts, 2, cv.CV_64F, cornersJs)
+                let objPointsCV = cv.matFromArray(nrDetectedPts, 3, cv.CV_32F, objPtsJs)
+                let cornerPtsCV = cv.matFromArray(nrDetectedPts, 2, cv.CV_32F, cornersJs)
+
+                //let pts3_cont_vec = new cv.MatVector();
+                //let pts2_cont_vec = new cv.MatVector();
+                // for (let p = 0; p < nrDetectedPts; ++p) {
+                //     pts3_cont_vec.push_back(objPointsCV.row(p).t().clone());
+                //     pts2_cont_vec.push_back(cornerPtsCV.row(p).t().clone());
+                // }
+
+                //pts3_cont_vec.push_back(objPointsCV.t().clone());
+                //pts2_cont_vec.push_back(cornerPtsCV.t().clone());
 
                 let rvec = new cv.Mat();
                 let tvec = new cv.Mat();
@@ -284,7 +307,12 @@ function aruco() {
                 // valid = cv.estimatePoseBoard(markerCorners, markerIds, board, cameraMatrix, distCoeffs, rvec, tvec);
                 let R_cv = new cv.Mat();
                 if (valid) {
-                
+                    
+                    let img_size = new cv.Size(width, height);
+                    let cam_mat = new cv.Mat();
+                    //cam_mat = cv.initCameraMatrix2D(pts3_cont_vec, pts2_cont_vec, img_size);
+
+
                     cv.Rodrigues(rvec, R_cv);
                     cv.drawAxis(RgbImage, cameraMatrix, distCoeffs, rvec, tvec, 0.1);
 
@@ -328,8 +356,10 @@ function aruco() {
                     console.log(tvec.doubleAt(0,2))
                     console.log(render_camera.quaternion)
                     console.log(render_camera.position)
-                    
+
                     render();
+                    upate_video_context();
+
                 }
                 R_cv.delete();
                 rvec.delete();
@@ -370,7 +400,7 @@ function laplacian() {
             
             let timeDiff = endTime - startTime; //in ms 
             document.getElementById("framerate").innerHTML = (1000.0 / timeDiff).toFixed(2) + " FPS";
-
+            
             cv.imshow("canvasOutput", laplacianImage);
         
         }, run_interval);
@@ -399,7 +429,7 @@ function  playVideo() {
     bufferTexture = new THREE.WebGLRenderTarget(width, height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
     renderer.setSize(width, height);
     //document.body.appendChild( renderer.domElement );
-    render_camera = new THREE.PerspectiveCamera( 100, width/height, 0.01, 10 );
+    render_camera = new THREE.PerspectiveCamera( 75, width/height, 0.01, 10 );
 
     start.disabled = true;
     if (document.getElementById("aruco_test_content")) {
