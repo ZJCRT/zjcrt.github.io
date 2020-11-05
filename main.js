@@ -30,7 +30,7 @@ let tvec = null;
 let board = null;
 
 let run_interval = 30; // fps
-
+let fielf_of_view_render_cam = 53;
 
 // setup a basic scene
 let scene = new THREE.Scene();
@@ -70,16 +70,9 @@ function render() {
 }
 
 
-function read(a) {
-    alert(a);
-}
-
-function load() {
-    let canvas = document.getElementById('canvasOutput');
-    let dataURL = canvas.toDataURL();
-    qrcode.callback = read;
-    qrcode.decode(dataURL);
-}
+// function read(a) {
+//     alert(a);
+// }
 
 function initVideo(ev){
     if (!streaming) {
@@ -247,16 +240,28 @@ function aruco() {
     rvecs = new cv.Mat();
     tvecs = new cv.Mat();
     RgbImage = new cv.Mat();
-    let fx = 1.2*width;
-    let fy = 1.2*width;
-    let cx = width / 2.0;
-    let cy = height / 2.0;
+    let fx = 603.85528766 / 2.0;
+    let fy =  604.03593653 / 2.0;
+    let cx = 317.48109738 / 2.0;
+    let cy = 231.79440428 / 2.0;
 
+    fielf_of_view_render_cam = 2.0 * Math.atan(width / (2*fx)) * 180.0 / Math.PI;
+    document.getElementById("FoV").innerHTML = fielf_of_view_render_cam + " degree.";
+    render_camera = new THREE.PerspectiveCamera(fielf_of_view_render_cam, width/height, 0.01, 2 );
+
+// webcam steffen ubuntu laptop
+//     camera matrix:
+//     [[603.85528766   0.         317.48109738]
+//     [  0.         604.03593653 231.79440428]
+//     [  0.           0.           1.        ]]
+//    distortion coefficients:  [ 1.23291906e-01 -5.63173016e-01 -1.41618636e-03  4.32680318e-04
+//     -7.77739837e-02]
+    
     cameraMatrix = cv.matFromArray(3, 3, cv.CV_64F, 
                                     [fx, 0., cx, 
                                      0., fy, cy, 
                                      0., 0., 1.]);
-    distCoeffs = cv.matFromArray(5, 1, cv.CV_64F, [0.0,0.0,0.0,0.0,0.0]);
+    distCoeffs = cv.matFromArray(5, 1, cv.CV_64F, [1.23291906e-01, -5.63173016e-01, -1.41618636e-03,  4.32680318e-04,    -7.77739837e-02]);
     // "video" is the id of the video tag
     loopIndex = setInterval(
         function(){
@@ -350,16 +355,18 @@ function aruco() {
                         0, 0, 0, 1);
                         
                     quaternion.setFromRotationMatrix(matrix)
+                    render_camera.set
                     render_camera.position.set(X._data[0], X._data[1], X._data[2]);        
                     render_camera.quaternion.copy(quaternion);
                     //render_camera.lookAt(0,0,0);
                     
-                    console.log(tvec.doubleAt(0,2))
-                    console.log(render_camera.quaternion)
-                    console.log(render_camera.position)
+                    // console.log(tvec.doubleAt(0,2))
+                    // console.log(render_camera.quaternion)
+                    // console.log(render_camera.position)
 
                     upate_video_context();
                     render();
+
                 }
                 R_cv.delete();
                 rvec.delete();
@@ -369,8 +376,8 @@ function aruco() {
             var timeDiff = endTime - startTime; //in ms 
             document.getElementById("framerate").innerHTML = (1000.0 / timeDiff).toFixed(2) + " FPS";
             document.getElementById("nrdetectedmarkers").innerHTML = markerIds.rows;
+            cv.imshow("arucoDetections", RgbImage);
 
-            cv.imshow("canvasOutput", RgbImage);
             
         }, run_interval);
 
@@ -429,7 +436,6 @@ function  playVideo() {
     bufferTexture = new THREE.WebGLRenderTarget(width, height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
     renderer.setSize(width, height);
     //document.body.appendChild( renderer.domElement );
-    render_camera = new THREE.PerspectiveCamera( 90, width/height, 0.01, 10 );
 
     start.disabled = true;
     if (document.getElementById("aruco_test_content")) {
@@ -498,7 +504,9 @@ function stopCamera() {
         board = null;
     }
 
-    document.getElementById("canvasOutput").getContext("2d").clearRect(0, 0, width, height);
+    document.getElementById("canvasOutput").getContext("2d").clearRect(0, 0, width, height);    
+    document.getElementById("arucoDetections").getContext("2d").clearRect(0, 0, width, height);
+
     video.pause();
     video.srcObject = null;
     stream.getVideoTracks()[0].stop();

@@ -13,13 +13,14 @@
         <!--<input type="checkbox" id="checkbox" disabled="true">Enable Processing</input>-->
         <button class="btn btn-outline-danger" role="button" id="stop" disabled="true" onclick="stopCamera();">Stop</button><br>
         <p id="imgsize">Video size (w,h): 0,0 pixel</p><br>
+        <p id="FoV">Fiel of view: x degree.</p><br>
         <div id="container">
             <canvas id="video_canvas" width=320, height=240></canvas>
             <canvas id="threejs_canvas" width=320, height=240></canvas>
         </div>        
 
         <video id="video">Your browser does not support the video tag.</video>
-        <canvas id="canvasOutput"></canvas>
+        <canvas id="arucoDetections"></canvas>
         <br>Aruco marker detection speed: <p id="framerate">0 FPS</p>
         <br>Number of detected markers: <p id="nrdetectedmarkers">0</p>
     </div> 
