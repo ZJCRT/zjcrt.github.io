@@ -34,7 +34,9 @@ let run_interval = 30; // fps
 
 // setup a basic scene
 let scene = new THREE.Scene();
-let renderer = new THREE.WebGLRenderer({ alpha: true } ); 
+const canvas = document.querySelector('#video_input');
+
+let renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true } ); 
 renderer.shadowMap.enabled = true;
 let render_camera = null;
 //// This is where we create our off-screen render target ////
@@ -245,7 +247,7 @@ function aruco() {
     loopIndex = setInterval(
         function(){
             // disable video showing on left side
-            document.getElementById("video").style.display="none";
+            //document.getElementById("video").style.display="none";
 
             cap = new cv.VideoCapture("video");
             cap.read(inputImage);
@@ -326,6 +328,7 @@ function aruco() {
                     console.log(tvec.doubleAt(0,2))
                     console.log(render_camera.quaternion)
                     console.log(render_camera.position)
+                    
                     render();
                 }
                 R_cv.delete();
@@ -353,7 +356,8 @@ function laplacian() {
         function(){
             // disable video showing on left side
             // disable video showing on left side
-            document.getElementById("video").style.display="none";
+            // document.getElementById("video").style.display="none";
+
             let cap = new cv.VideoCapture("video");
             cap.read(inputImage);
 
@@ -394,7 +398,7 @@ function  playVideo() {
 
     bufferTexture = new THREE.WebGLRenderTarget(width, height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
     renderer.setSize(width, height);
-    document.body.appendChild( renderer.domElement );
+    //document.body.appendChild( renderer.domElement );
     render_camera = new THREE.PerspectiveCamera( 100, width/height, 0.01, 10 );
 
     start.disabled = true;
