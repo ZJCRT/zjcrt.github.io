@@ -171,8 +171,12 @@ function start_benchmarks() {
     start = document.getElementById("startup");
     start.disabled = true;
 
+    // warmup
+    let timings = timeToMsAndFPS(aruco(inputImage, 160, 120));
+
+
     spinnerStatus("spin1", true);
-    let timings = timeToMsAndFPS(aruco(inputImage, 320, 240));
+    timings = timeToMsAndFPS(aruco(inputImage, 320, 240));
     document.getElementById("ArudoVGA2").innerHTML = "Aruco 320x240: "+ timings['ms'] + "ms, " + timings['fps'] + " fps";
     spinnerStatus("spin1", false);
 
