@@ -127,8 +127,37 @@ function laplacian(inputImage) {
     grayImage.delete();
     laplacianImage.delete();
     
-    return timeDiff
+    return timeDiff;
 }
+
+
+function featureDetection(inputImage, width, height) {
+    let detector = new cv.BRISK();
+    let grayImage = new cv.Mat();
+    let features = new cv.KeyPointVector();
+    let descriptors = new cv.Mat();
+    let mask = new cv.Mat();
+
+    cv.cvtColor(inputImage, grayImage, cv.COLOR_RGBA2GRAY, 0);
+    cv.resize(grayImage, grayImage, {width:width, height:height});
+
+    let startTime = performance.now();
+
+    for (let i=0; i < NUM_ITERS; ++i) {
+        detector.detectAndCompute(grayImage,mask, features, descriptors);
+    }
+    let endTime = performance.now();
+
+    let timeDiff = endTime - startTime; //in ms 
+
+    grayImage.delete();
+    features.delete();
+    detector.delete();
+    descriptors.delete();
+
+    return timeDiff;
+}
+
 
 function onImageLoaded() {
     imageLoaded = true;
@@ -195,6 +224,12 @@ function start_benchmarks() {
     document.getElementById("Laplacian").innerHTML = "Laplacian 1920x1080: "+ timings['ms'] + "ms, " + timings['fps'] + " fps";
     spinnerStatus("spin4", false);
     inputImage.delete()
+
+    timings = timeToMsAndFPS(featureDetection(inputImage, 320, 240));
+    document.getElementById("Akaze1").innerHTML = "ORB 320x240: "+ timings['ms'] + "ms, " + timings['fps'] + " fps";
+    // timings = timeToMsAndFPS(featureDetection(inputImage, 640, 480));
+    // document.getElementById("Akaze2").innerHTML = "Laplacian 320x240: "+ timings['ms'] + "ms, " + timings['fps'] + " fps";
+
 }
 
 
