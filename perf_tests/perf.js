@@ -41,16 +41,30 @@ function aruco(inputImage, width, height) {
     let distCoeffs = new cv.Mat();
     distCoeffs = cv.matFromArray(5, 1, cv.CV_64F, [0.0,0.0,0.0,0.0,0.0]);
 
+    let parameter = new cv.aruco_DetectorParameters()
+    parameter.adaptiveThreshWinSizeMin = 3;
+    parameter.adaptiveThreshWinSizeMax = 23;
+    parameter.adaptiveThreshWinSizeStep = 10,
+    parameter.adaptiveThreshConstant = 7;
+    parameter.cornerRefinementMethod = cv.CORNER_REFINE_SUBPIX; // CORNER_REFINE_NONE
+    parameter.cornerRefinementWinSize = 5;
+    parameter.cornerRefinementMaxIterations = 5;
+    parameter.cameraMotionSpeed = 0.8;
+    parameter.useAruco3Detection = true;
+    parameter.useGlobalThreshold = true;
+    parameter.minSideLengthCanonicalImg = 16;
+
     let dictionary = new cv.aruco_Dictionary(cv.DICT_ARUCO_ORIGINAL);
     let board = new cv.aruco_GridBoard(2,2, 0.08, 0.02, dictionary); 
 
     let startTime = performance.now();
     let RgbImage = new cv.Mat();
-
+    let last_run_size = 0.0;
     for (let i = 0; i < NUM_ITERS; ++i) {
         cv.cvtColor(inputImage, RgbImage, cv.COLOR_RGBA2RGB, 0);
         cv.resize(RgbImage, RgbImage, {width:width, height:height})
-        cv.detectMarkers(RgbImage, dictionary, markerCorners, markerIds);
+        parameter.minMarkerLengthRatioOriginalImg = last_run_size;
+        last_run_size = cv.detectMarkers(RgbImage, dictionary, markerCorners, markerIds, parameter);
         let nrDetectedPts = 4*markerCorners.size();
             
         if (markerIds.rows > 0) {
@@ -107,6 +121,7 @@ function aruco(inputImage, width, height) {
     dictionary.delete();
     board.delete();
     RgbImage.delete();
+    parameter.delete();
 
     return timeDiff;
 }
