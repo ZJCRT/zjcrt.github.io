@@ -94,8 +94,8 @@ var constraints = {
     audio: false,
     video: {
         facingMode: "environment",
-        width: { min: 320, max: 320 },
-        height: { min: 240, max: 240 },
+        width: { min: 320, max: 640 },
+        height: { min: 240, max: 480 },
     },
 };
 
@@ -167,7 +167,7 @@ function aruco() {
     // inputImage are declared and deleted elsewhere
     markerImage = new cv.Mat();
     dictionary = new cv.aruco_Dictionary(cv.DICT_ARUCO_ORIGINAL);
-    //parameter = new cv.DetectorParameters();
+    parameter = new cv.aruco_DetectorParameters()
     board = new cv.aruco_GridBoard(2,2, 0.08, 0.02, dictionary);
 
     // let objPts =  [[0.        , 0.17999999, 0.        ],
@@ -210,40 +210,34 @@ function aruco() {
                    0.09999999, 0.        , 0.        ]
             };
 
-    // // parameter.adaptiveThreshWinSizeMin = 3,
-    // parameter.adaptiveThreshWinSizeMin = 23;
-    // // parameter.adaptiveThreshWinSizeMax = 23,
-    // parameter.adaptiveThreshWinSizeMax = 23;
-    // parameter.adaptiveThreshWinSizeStep = 10,
-    // parameter.adaptiveThreshConstant = 7;
-    // // parameter.minMarkerPerimeterRate = 0.03;
-    // parameter.minMarkerPerimeterRate = 0.1;
-    // parameter.maxMarkerPerimeterRate = 4;
-    // parameter.polygonalApproxAccuracyRate = 0.03;
-    // parameter.minCornerDistanceRate = 0.05;
-    // parameter.minDistanceToBorder = 3;
-    // parameter.minMarkerDistanceRate = 0.05;
-    // parameter.cornerRefinementMethod = cv.CORNER_REFINE_SUBPIX; // CORNER_REFINE_NONE
-    // parameter.cornerRefinementWinSize = 5;
-    // parameter.cornerRefinementMaxIterations = 10;
-    // parameter.cornerRefinementMinAccuracy = 0.1;
-    // parameter.markerBorderBits = 1;
-    // // parameter.perspectiveRemovePixelPerCell = 4;
-    // parameter.perspectiveRemovePixelPerCell = 2;
-    // parameter.perspectiveRemoveIgnoredMarginPerCell = 0.13;
-    // parameter.maxErroneousBitsInBorderRate = 0.35;
-    // parameter.minOtsuStdDev = 5.0;
-    // parameter.errorCorrectionRate = 0.6;
+    parameter.adaptiveThreshWinSizeMin = 3;
+    parameter.adaptiveThreshWinSizeMax = 23;
+    // parameter.adaptiveThreshWinSizeMax = 23,
+    parameter.adaptiveThreshWinSizeStep = 10,
+    parameter.adaptiveThreshConstant = 7;
+    parameter.cornerRefinementMethod = cv.CORNER_REFINE_SUBPIX; // CORNER_REFINE_NONE
+    parameter.cornerRefinementWinSize = 5;
+    parameter.cornerRefinementMaxIterations = 5;
+    parameter.cameraMotionSpeed = 0.8;
+    parameter.useAruco3Detection = true;
+    parameter.useGlobalThreshold = true;
+    parameter.minSideLengthCanonicalImg = 16;
 
     markerIds = new cv.Mat();
     markerCorners  = new cv.MatVector();
     rvecs = new cv.Mat();
     tvecs = new cv.Mat();
     RgbImage = new cv.Mat();
-    let fx = 603.85528766 / 2.0;
-    let fy =  604.03593653 / 2.0;
-    let cx = 317.48109738 / 2.0;
-    let cy = 231.79440428 / 2.0;
+    let fx = 603.85528766 ;
+    let fy =  604.03593653;
+    let cx = 317.48109738;
+    let cy = 231.79440428;
+    if ( width = 320) {
+        fx /= 2.0;
+        fy /= 2.0;
+        cy /= 2.0;
+        cx /= 2.0;
+    }
 
     fielf_of_view_render_cam = 2.0 * Math.atan(width / (2*fx)) * 180.0 / Math.PI;
     document.getElementById("FoV").innerHTML = fielf_of_view_render_cam + " degree.";
@@ -263,6 +257,7 @@ function aruco() {
                                      0., 0., 1.]);
     distCoeffs = cv.matFromArray(5, 1, cv.CV_64F, [1.23291906e-01, -5.63173016e-01, -1.41618636e-03,  4.32680318e-04,    -7.77739837e-02]);
     // "video" is the id of the video tag
+    let last_min_seg_img_size = 0.0;
     loopIndex = setInterval(
         function(){
             // disable video showing on left side
@@ -274,9 +269,12 @@ function aruco() {
             let startTime = performance.now();
 
             cv.cvtColor(inputImage, RgbImage, cv.COLOR_RGBA2RGB, 0);
-            cv.detectMarkers(RgbImage, dictionary, markerCorners, markerIds);
+            parameter.minMarkerLengthRatioOriginalImg = last_min_seg_img_size;
+            last_min_seg_img_size = cv.detectMarkers(RgbImage, dictionary, markerCorners, markerIds, parameter);
             let nrDetectedPts = 4*markerCorners.size();
             
+            document.getElementById("sizefactor").innerHTML = "Min segmentation img size factor: " + last_min_seg_img_size;
+
 
             let endTime = performance.now();    
             if (markerIds.rows > 0) {
