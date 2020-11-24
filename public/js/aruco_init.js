@@ -9,30 +9,30 @@ Steffen Urban November 2020
 
 
 // from https://www.geekstrick.com/load-json-file-locally-using-pure-javascript/
-function loadJSON(callback) {   
+// function loadJSON(callback) {   
 
-    var xobj = new XMLHttpRequest();
-    xobj.overrideMimeType("application/json");
-    xobj.open('GET', '../resource/aruco_board_definition.json', false); // Replace 'appDataServices' with the path to your file
-    xobj.onreadystatechange = function () {
-          if (xobj.readyState == 4 && xobj.status == "200") {
-            // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
-            callback(xobj.responseText);
-          }
-    };
-    xobj.send(null);  
- }
+//     var xobj = new XMLHttpRequest();
+//     xobj.overrideMimeType("application/json");
+//     xobj.open('GET', '../resource/aruco_board_definition.json', false); // Replace 'appDataServices' with the path to your file
+//     xobj.onreadystatechange = function () {
+//           if (xobj.readyState == 4 && xobj.status == "200") {
+//             // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
+//             callback(xobj.responseText);
+//           }
+//     };
+//     xobj.send(null);  
+//  }
 
 function init_aruco() {
 
     // the board is defined in the html as <script type="text/javascript" src="aruco_board_definition.json"></script>
-    let aruco_board_definition = null;
-    loadJSON(function(response) {
-        // Parsing JSON string into object
-        aruco_board_definition = JSON.parse(response);
-       });
+    // let aruco_board_definition = null;
+    // loadJSON(function(response) {
+    //     // Parsing JSON string into object
+    //     aruco_board_definition = JSON.parse(response);
+    //    });
 
-
+    const aruco_board_definition = ARUCO_BOARD;
     let dictionary = new cv.aruco_Dictionary(aruco_board_definition["arucoDict"]);
     let parameters = new cv.aruco_DetectorParameters();
 

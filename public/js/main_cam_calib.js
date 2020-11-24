@@ -96,10 +96,6 @@ function stopCamera() {
     video.removeEventListener("canplay", initVideo);
 }
 
-function getNumberOfImatesInBackground() {
-
-}
-
 async function takeImage() {
     // get image from video context and send it to the aruco extraction worker
     videoImageContext.drawImage(videoDom, 0, 0);

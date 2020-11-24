@@ -6,6 +6,7 @@ self.importScripts('../js_libs/math.js', '../js_libs/three.min.js');
 self.importScripts('./calibrate_camera.js', './extract_aruco_for_calib.js');
 self.importScripts('./utils.js', './extract_aruco_for_calib.js');
 self.importScripts('./aruco_init.js');
+self.importScripts('../resource/aruco_board_definition.js');
 
 let last_min_seg_img_size = 0.0;
 const TRACKING_WIDTH = 320;
