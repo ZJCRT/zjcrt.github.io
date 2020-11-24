@@ -104,7 +104,14 @@ async function takeImage() {
     // get image from video context and send it to the aruco extraction worker
     videoImageContext.drawImage(videoDom, 0, 0);
     const imageData = videoImageContext.getImageData(0, 0, width, height);
+    document.getElementById("extract_status").innerHTML = "Start aruco extraction of new frame.";
+    let startTime = performance.now();
+    // extract aruco markers
     const aruco_points = await cv_service.extractArucoForCalib(imageData);
+
+    var time_diff = performance.now() - startTime; //in ms 
+    document.getElementById("extract_status").innerHTML = "Finished aruco extraction of new frame in "+time_diff.toFixed(2)+"ms.";
+
     const view_id = "view_"+aruco_points.data.payload["view_id"]
     // backgroundScene is global
     backgroundScene[view_id] = {};
