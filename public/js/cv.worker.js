@@ -1,4 +1,5 @@
-// created by Steffen Urban, November 2020
+// Steffen Urban, November 2020, Carl Zeiss AG
+
 // used example structure from https://github.com/vinissimus/opencv-js-webworker
 
 self.importScripts('../js_libs/math.js', '../js_libs/three.min.js');
@@ -12,72 +13,21 @@ const TRACKING_HEIGHT = 240;
 
 // initialize aruco stuff 
 let aruco_board = null;
+let view_id_idx = -1;
 
-let view_id = -1;
 
 function extractArucoForCalib({ msg, payload }) {
-    const input_image = cv.matFromImageData(payload);
-    const parameters = aruco_board["aruco_parameters"]
-     
-    parameters.adaptiveThreshWinSizeMin = 3;
-    parameters.adaptiveThreshWinSizeMax = 23;
-    parameters.adaptiveThreshWinSizeStep = 10,
-    parameters.adaptiveThreshConstant = 7;
-    parameters.cornerRefinementMethod = cv.CORNER_REFINE_SUBPIX;
-    parameters.cornerRefinementWinSize = 5;
-    parameters.cornerRefinementMaxIterations = 10;
-
-    // this is all new stuff
-    parameters.useAruco3Detection = false;
-    let marker_ids = new cv.Mat();
-    let marker_corners  = new cv.MatVector();
-    let gray_image = new cv.Mat();
-
-    // "video" is the id of the video tag
-    cv.cvtColor(input_image, gray_image, cv.COLOR_RGBA2GRAY);
-    // detect markers
-    cv.detectMarkers(gray_image, aruco_board["aruco_dictionary"], marker_corners, marker_ids, parameters);
-
-    let nr_detected_pts = 4 * marker_corners.size();
-    let corners_js = [];
-    let obj_pts_js = [];
-    console.log("detected: "+marker_ids.rows+" markers.")
-    if (marker_ids.rows > 0) {
-        for (let i = 0; i < marker_corners.size(); ++i) {
-            let corners = marker_corners.get(i);
-            let id = marker_ids.intAt(0,i);
-            for (let c = 0; c < 8; ++c) {
-              corners_js.push(corners.floatAt(0,c));
-              console.log(corners);
-            }
-            for (let p = 0; p < 4; ++p) {
-              for (let c = 0; c < 3; ++c) {
-                obj_pts_js.push(aruco_board["aurco_tracking_object_points"][id][p][c]) 
-              }
-            }
-        }
-    }
-
-    view_id += 1;
-
-
-    return_dict = {"view_id" : view_id, 
-                   "obj_pts_js" : obj_pts_js, 
-                   "corners_js" : corners_js,
-                   "image_size" : {width : gray_image.cols, height : gray_image.rows}};
-    gray_image.delete();
-    marker_corners.delete();
-    marker_ids.delete();
+    const return_dict = extractArucoForCalibSub(payload, aruco_board);
     postMessage({ msg, payload: return_dict});
-    return ;
 }
 
 
+// camera calibration
+// Input: the backgroundScene 
+// Output: the backgroundScene with calibration
 function calibrateCamera({ msg, payload }) {
-
-  const return_stuff = calibrateCameraSub(payload);
-
-  return return_stuff;
+  const background_scene = calibrateCameraSub(payload);
+  postMessage({ msg, payload: background_scene});
 }
 
 /**
@@ -294,11 +244,17 @@ function poseEstimation({ msg, payload }) {
         break
       }
       case 'poseEstimation':
-        return poseEstimation(evt.data);
+        if (aruco_board != null) {
+          return poseEstimation(evt.data);
+        }
       case 'extractArucoForCalib':
-        return extractArucoForCalib(evt.data);
+        if (aruco_board != null) {
+          return extractArucoForCalib(evt.data);
+        }
       case 'calibrateCamera':
-        return calibrateCamera(evt.data);
+        if (aruco_board != null) {
+          return calibrateCamera(evt.data);
+        }
       default:
         break
     }

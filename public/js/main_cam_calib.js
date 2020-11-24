@@ -96,22 +96,59 @@ function stopCamera() {
     video.removeEventListener("canplay", initVideo);
 }
 
+function getNumberOfImatesInBackground() {
+
+}
+
 async function takeImage() {
     // get image from video context and send it to the aruco extraction worker
     videoImageContext.drawImage(videoDom, 0, 0);
     const imageData = videoImageContext.getImageData(0, 0, width, height);
     const aruco_points = await cv_service.extractArucoForCalib(imageData);
     const view_id = "view_"+aruco_points.data.payload["view_id"]
+    // backgroundScene is global
     backgroundScene[view_id] = {};
     backgroundScene[view_id]["obj_pts"] = aruco_points.data.payload["obj_pts_js"];
     backgroundScene[view_id]["img_pts"] = aruco_points.data.payload["corners_js"];
-
-    console.log(backgroundScene)
+    backgroundScene[view_id]["image_size"] = aruco_points.data.payload["image_size"];
 }
 
 async function runCameraCalibration() {
 
-    const calibratedBackgroundScene = await cv_service.calibrateCamera(backgroundScene);
+    const calibrated_background = await cv_service.calibrateCamera(backgroundScene);
+
+    const calib_data = calibrated_background.data.payload;
+
+    document.getElementById("camera_matrix").innerHTML = "Camera matrix (fx,fy,cx,cy) "+
+        calib_data["camera_matrix"][0][0].toFixed(2) + ", "+
+        calib_data["camera_matrix"][1][1].toFixed(2) + ", "+
+        calib_data["camera_matrix"][0][2].toFixed(2) + ", "+
+        calib_data["camera_matrix"][1][2].toFixed(2);
+
+    document.getElementById("camera_matrix_std").innerHTML = "Camera matrix std dev (s_fx,s_fy,s_cx,s_cy) "+
+        calib_data["std_intrinsics_calibration"][0].toFixed(2) + ", "+
+        calib_data["std_intrinsics_calibration"][1].toFixed(2) + ", "+
+        calib_data["std_intrinsics_calibration"][2].toFixed(2) + ", "+
+        calib_data["std_intrinsics_calibration"][3].toFixed(2);   
+
+    document.getElementById("distortion_coeffs").innerHTML = "Distortion coefficients (k1,k2,k3): "+
+        calib_data["distortion_coefficients"][0].toFixed(2)+ ", "+
+        calib_data["distortion_coefficients"][1].toFixed(2)+ ", "+
+        calib_data["distortion_coefficients"][4].toFixed(2);
+
+   var element = document.getElementById("calib_results_div");
+    const views = Object.keys(calib_data); // get all views
+    views.forEach((view, index) => {
+        if (view.includes("view_")) {
+            var para = document.createElement("p");               // Create a <p> element
+            const std_dev = calib_data[view]["std_extrinsics"];
+            para.innerText = view + " reproj error: "+calib_data[view]["per_view_error"]+ " pixel. Extr std dev: [" + 
+                std_dev[0].toFixed(4) + "," + std_dev[1].toFixed(4) + "," + 
+                std_dev[2].toFixed(4) + "," + std_dev[3].toFixed(4) + "," + 
+                std_dev[4].toFixed(4) + "," + std_dev[5].toFixed(4) + "]"; 
+            element.appendChild(para);
+        }
+    });
 
 }
 

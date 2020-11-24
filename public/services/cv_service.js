@@ -1,3 +1,6 @@
+// Steffen Urban, November 2020, Carl Zeiss AG
+
+
 class CV_SERVICE {
     /**
      * We will use this method privately to communicate with the worker and 

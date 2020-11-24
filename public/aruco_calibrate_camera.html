@@ -20,10 +20,13 @@
         <p id="webworkerlog"></p><br>
         <div id="container">
             <canvas id="video_canvas" width="640" height="480"></canvas>
-        </div>        
-        <p id="nrimages">Video size (w,h): 0,0 pixel</p><br>
-        <p id="calibrationresult">Calibration results:</p><br>
-
+        </div>      
+        <div id="calib_results_div">
+            <p id="camera_matrix"></p><br>
+            <p id="camera_matrix_std"></p><br>
+            <p id="distortion_coeffs"></p><br>
+            <p id="intrinsic_stds"></p><br>
+        </div>  
         <video id="video" autoplay loop muted playsinline style="display: true;">Your browser does not support the video tag.</video>
     </div> 
     </body>
