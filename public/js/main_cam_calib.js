@@ -1,4 +1,4 @@
-'use strict';
+//'use strict';
 import cv_service from '../services/cv_service.js';
 
 
