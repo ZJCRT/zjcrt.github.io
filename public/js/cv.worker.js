@@ -1,7 +1,7 @@
 // Steffen Urban, November 2020, Carl Zeiss AG
 
 // used example structure from https://github.com/vinissimus/opencv-js-webworker
-
+if( 'function' === typeof importScripts) {
 self.importScripts('../js_libs/math.js', '../js_libs/three.min.js');
 self.importScripts('./calibrate_camera.js', './extract_aruco_for_calib.js');
 self.importScripts('./utils.js', './extract_aruco_for_calib.js');
@@ -260,3 +260,5 @@ function poseEstimation({ msg, payload }) {
         break
     }
   }
+
+}
