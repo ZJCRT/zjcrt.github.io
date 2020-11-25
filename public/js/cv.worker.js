@@ -14,11 +14,12 @@ const TRACKING_HEIGHT = 240;
 
 // initialize aruco stuff 
 let aruco_board = null;
-let view_id_idx = -1;
+let view_id_idx = 0;
 
 
 function extractArucoForCalib({ msg, payload }) {
-    const return_dict = extractArucoForCalibSub(payload, aruco_board);
+    const return_dict = extractArucoForCalibSub(payload, aruco_board, view_id_idx);
+    view_id_idx += 1;
     postMessage({ msg, payload: return_dict});
 }
 

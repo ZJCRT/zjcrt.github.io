@@ -4,7 +4,7 @@
 Steffen Urban, November 2020, Carl Zeiss AG
 */
 
-function extractArucoForCalibSub(image_payload, aruco_board) {
+function extractArucoForCalibSub(image_payload, aruco_board, view_id_idx) {
 
     const input_image = cv.matFromImageData(image_payload);
     const parameters = aruco_board["aruco_parameters"]
@@ -41,7 +41,6 @@ function extractArucoForCalibSub(image_payload, aruco_board) {
             const id = marker_ids.intAt(0,i);
             for (let c = 0; c < 8; ++c) {
               corners_js.push(corners.floatAt(0,c));
-              console.log(corners);
             }
             for (let p = 0; p < 4; ++p) {
               for (let c = 0; c < 3; ++c) {
@@ -50,8 +49,6 @@ function extractArucoForCalibSub(image_payload, aruco_board) {
             }
         }
     }
-
-    view_id_idx += 1;
 
     result = {"view_id" : view_id_idx, 
               "obj_pts_js" : obj_pts_js, 
