@@ -1,7 +1,7 @@
 //'use strict';
 import cv_service from '../services/cv_service.js';
 
-// Video dimensions
+//video dimensions
 let width = 0;
 let height = 0;
 
@@ -9,21 +9,29 @@ let height = 0;
 let streaming = false;
 
 // Some HTML elements we need to configure.
-let video = null;
+let video =  document.getElementById("video");;
 let stream = null;
+let canvas = document.getElementById('threejs_canvas');
 
 var constraints = {
     audio: false,
     video: {
         facingMode: "environment",
-        width: { min: 320, max: 640 },
-        height: { min: 240, max: 480 },
+        width: { ideal: 640 },
+        height: { ideal: 480 } 
     },
 };
 
 function startup() {
-    video = document.getElementById("video");
+    updateDimensions();
+
+    //increase video resolution on mobile device
+    if( /Android|iPhone|iPad/i.test(navigator.userAgent) ) {
+        constraints.video.width=width;
+        constraints.video.height=height;
+    }
     
+
     // start camera
     navigator.mediaDevices.getUserMedia(constraints)
         .then(function(s) {
@@ -37,14 +45,25 @@ function startup() {
     // load webworker
     cv_service.loadArucoWebWorker();
     video.addEventListener("canplay", initVideo, false);
+
+    // request fullscreen works only triggered by the user
+    // const div = document.getElementById("guide_content");
+    // if (div.requestFullscreen) 
+    //     div.requestFullscreen();
+    // else if (div.webkitRequestFullscreen) 
+    //     div.webkitRequestFullscreen();
+    // else if (div.msRequestFullScreen) 
+    //   div.msRequestFullScreen();
 }
 
 function initVideo(ev){
     if (!streaming) {
-        height = video.videoHeight;
-        width = video.videoWidth;
+
+        let aspect = width/height;
+
         video.setAttribute("width", width);
         video.setAttribute("height", height);
+        console.dir(`Dimensions Video: ${video.videoWidth}x${video.videoHeight}`);
 
         streaming = true;
         playVideo();
@@ -58,4 +77,41 @@ function playVideo() {
     }
 }
 
+function updateDimensions(){
+    let orientation = window.screen.orientation.type;
+    console.log(`orientation: `+orientation);
+
+    if (orientation === "landscape-primary" || orientation === "landscape-secondary") {
+        width = window.innerWidth;
+        height = window.innerHeight;
+    } else if (orientation === "portrait-secondary" || orientation === "portrait-primary") {
+        width = window.innerHeight;
+        height = window.innerWidth;
+    } else if (orientation === undefined) {
+        console.log("ORIENTATION API NOT SUPPORTED"); 
+        width = window.innerWidth;
+        height = window.innerHeight;
+    }
+
+    console.dir(`Dimensions Window: ${window.innerWidth}x${window.innerHeight}` );
+    console.dir(`Resulting Dimensions: ${width}x${height}`)
+}
+
+
+function stopCamera() {
+    document.getElementById("threejs_canvas").getContext("2d").clearRect(0, 0, canvas.clientWidth, canvac.clientHeight);    
+
+    
+    video.pause();
+    video.srcObject = null;
+    stream.getVideoTracks()[0].stop();
+    start.disabled = false;
+    video.removeEventListener("canplay", initVideo);
+}
+
+
+
+
+
 document.body.addEventListener("load",startup(), false); //autostart video
+window.addEventListener("beforeunload",stopCamera);

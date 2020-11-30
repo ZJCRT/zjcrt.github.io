@@ -1,16 +1,24 @@
+html, body {
+    margin: 0;
+    overflow: hidden;
+    height: 100%;
+    background-color: black;
+}
+
 video {
     position:absolute;
     left:0;
     top:0;
+    width:100%;
+    height:100%;
     display: block;
     border: black;
 }
 
-#overlayWButton {
-	position: absolute;
-    top:310px;
-    left:20px;
-    width:600px;
-	z-index: 100;
-    visibility: hidden;
+#threejs_canvas{
+    left:0;
+    top:0;
+    width: 100%;
+    height: 100%;
+    display: block;
 }
