@@ -13,17 +13,19 @@
     </div>
     <div id="aruco_test_content">
         <button class="btn btn-outline-success" role="button" id="startup">Start</button>
+        <button class="btn btn-outline-primary" role="button" id="estimate_camera_intrinsics">Initialize Render Camera Intrinsics</button>
         <button class="btn btn-outline-danger" role="button" id="stop">Stop</button><br>
         <p id="webworkerlog"></p><br>
+        <p id="log"></p><br>
         <p id="imgsize">Video size (w,h): 0,0 pixel</p><br>
         <p id="FoV">Fiel of view: x degree.</p><br>
-        <p id="estK">Estimated camera parameters: </p>
+        <p id="initial_cam_params">Estimated camera parameters: </p>
         <div id="container">
             <canvas id="video_canvas" width="640" height="480"></canvas>
             <canvas id="threejs_canvas" width="640" height="480"></canvas>
         </div>        
 
-        <video id="video" autoplay loop muted playsinline style="display: none;">Your browser does not support the video tag.</video>
+        <video id="video" autoplay loop muted playsinline style="display: flex;">Your browser does not support the video tag.</video>
     </div> 
     </body>
     <!--<script async src="js_libs/opencv_wasm.js" onerror="opencvjs_LoadError()"></script>-->

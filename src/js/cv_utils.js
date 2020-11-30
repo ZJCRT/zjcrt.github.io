@@ -31,7 +31,8 @@ function math_mat_Rt_to_threejs4x4(R,t) {
     return matrix;
 }
 
-function opencv_pose_to_threejs_pose(rcv, tcv) {
+function opencvPoseToThreejsPose(rcv, tcv) {
+    let R_cv = new cv.Mat();
     // from rodrigues to rotation matrix
     cv.Rodrigues(rcv, R_cv);
     const R_cv_m = opencv_mat3x3_to_math_mat(R_cv)
@@ -41,15 +42,17 @@ function opencv_pose_to_threejs_pose(rcv, tcv) {
 
     // camera pose in OpenGL format
     const X_ogl = math.multiply(minus_mat3(R_cv_m_t), t_cv_m)
-    const R_ogl = math.multiply(R_cv_t, OCV2OGL)
+    const R_ogl = math.multiply(R_cv_m_t, OCV2OGL)
 
     const hom_matrix = math_mat_Rt_to_threejs4x4(R_ogl, X_ogl)
-    var quaternion = new THREE.Quaternion();
-    quaternion.setFromRotationMatrix(matrix);
+    let quaternion = new THREE.Quaternion();
+    quaternion.setFromRotationMatrix(hom_matrix);
 
     R_cv.delete();
 
-    return {"hom_mat" : hom_matrix, "rotation_q" : quaternion, "position" : X_ogl};
+    return {"hom_mat" : hom_matrix, 
+            "rotation_q" : quaternion, 
+            "position" : [X_ogl._data[0],X_ogl._data[1],X_ogl._data[2]]};
 }
 
 

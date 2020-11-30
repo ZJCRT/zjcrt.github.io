@@ -356,7 +356,7 @@ function aruco() {
                     render_camera.position.set(X._data[0], X._data[1], X._data[2]);        
                     render_camera.quaternion.copy(quaternion);
 
-                    upate_video_context();
+                    //upate_video_context();
                     render();
 
                 }

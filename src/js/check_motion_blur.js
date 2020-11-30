@@ -4,15 +4,15 @@ Steffen Urban, November 2020, Carl Zeiss AG
 */
 
 
-function hasMotionBlur(image) {
+function hasMotionBlur(gray_image, motion_blur_thresh = 250) {
 
-    let grayImage = new cv.Mat();
     let laplacianImage = new cv.Mat();
+    let mean = new cv.Mat();
+    let std = new cv.Mat();
 
-    // cv.cvtColor(image, grayImage, cv.COLOR_RGBA2GRAY, 0); 
-    // cv.Laplacian(grayImage, laplacianImage, cv.CV_8UC1);
-
+    cv.Laplacian(gray_image, laplacianImage, cv.CV_64FC1);
+    cv.meanStdDev(laplacianImage, mean, std);
+    const variance = std.doubleAt(0) * std.doubleAt(0);
     // check variance
-    let motion_blur = false;
-    return motion_blur;
+    return {"has_motion_blur" : variance < motion_blur_thresh, "laplacian_variance" : variance};
 }

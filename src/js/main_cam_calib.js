@@ -110,13 +110,21 @@ async function takeImage() {
 
     var time_diff = performance.now() - startTime; //in ms 
     document.getElementById("extract_status").innerHTML = "Finished aruco extraction of new frame in "+time_diff.toFixed(2)+"ms.";
-
-    const view_id = "view_"+aruco_points.data.payload["view_id"]
-    // background_scene is global
-    background_scene[view_id] = {};
-    background_scene[view_id]["obj_pts"] = aruco_points.data.payload["obj_pts_js"];
-    background_scene[view_id]["img_pts"] = aruco_points.data.payload["corners_js"];
-    background_scene[view_id]["image_size"] = aruco_points.data.payload["image_size"];
+    document.getElementById("laplacian_blur").innerHTML = "Laplacian variance blur level: "+aruco_points.data.payload["laplacian_variance"].toFixed(2);
+    
+    if (aruco_points.data.payload["has_motion_blur"]) {
+        document.getElementById("warning_blur").style.color = 'red';
+        document.getElementById("warning_blur").innerHTML = "Motion blur too high. Move slowly!";
+    } else {
+        document.getElementById("warning_blur").style.color = 'green';
+        document.getElementById("warning_blur").innerHTML = "Motion blur ok. Saving image and extracting corners!";
+        const view_id = "view_"+aruco_points.data.payload["view_id"]
+        // background_scene is global
+        background_scene[view_id] = {};
+        background_scene[view_id]["obj_pts"] = aruco_points.data.payload["obj_pts_js"];
+        background_scene[view_id]["img_pts"] = aruco_points.data.payload["corners_js"];
+        background_scene[view_id]["image_size"] = aruco_points.data.payload["image_size"];
+    }
 }
 
 async function runCameraCalibration() {
@@ -168,21 +176,30 @@ async function takeInitImage() {
     const aruco_points = await cv_service.extractArucoForCalib(imageData);
     var time_diff = performance.now() - startTime; //in ms 
     document.getElementById("extract_status").innerHTML = "Finished aruco extraction of new frame in "+time_diff.toFixed(2)+"ms.";
+    document.getElementById("laplacian_blur").innerHTML = "Laplacian variance blur level: "+aruco_points.data.payload["laplacian_variance"].toFixed(2);
 
-    const view_id = "view_"+aruco_points.data.payload["view_id"]
-    // background_scene is global
-    init_scene[view_id] = {};
-    init_scene[view_id]["obj_pts"] = aruco_points.data.payload["obj_pts_js"];
-    init_scene[view_id]["img_pts"] = aruco_points.data.payload["corners_js"];
-    init_scene[view_id]["image_size"] = aruco_points.data.payload["image_size"];
+    if (aruco_points.data.payload["has_motion_blur"]) {
+        document.getElementById("warning_blur").style.color = 'red';
+        document.getElementById("warning_blur").innerHTML = "Motion blur too high. Move slowly!";
+    } else {
+        document.getElementById("warning_blur").style.color = 'green';
+        document.getElementById("warning_blur").innerHTML = "Motion blur ok. Saving image and extracting corners!";
 
-    const camera = await cv_service.estimateInitialCamera(init_scene);
-    const fx = camera.data.payload["camera_matrix"][0][0].toFixed(2);
-    const fy = camera.data.payload["camera_matrix"][1][1].toFixed(2);
-    const cx = camera.data.payload["camera_matrix"][0][2].toFixed(2);
-    const cy = camera.data.payload["camera_matrix"][1][2].toFixed(2);
-    document.getElementById('initial_cam_params').innerHTML = "Initial camera parameters: "+fx+", "+fy+", "+cx+", "+cy;
+        const view_id = "view_"+aruco_points.data.payload["view_id"]
+        // background_scene is global
+        init_scene[view_id] = {};
+        init_scene[view_id]["obj_pts"] = aruco_points.data.payload["obj_pts_js"];
+        init_scene[view_id]["img_pts"] = aruco_points.data.payload["corners_js"];
+        init_scene[view_id]["image_size"] = aruco_points.data.payload["image_size"];
 
+        const camera = await cv_service.estimateInitialCamera(init_scene);
+        const fx = camera.data.payload["camera_matrix"][0][0];
+        const fy = camera.data.payload["camera_matrix"][1][1];
+        const cx = camera.data.payload["camera_matrix"][0][2];
+        const cy = camera.data.payload["camera_matrix"][1][2];
+        document.getElementById('initial_cam_params').innerHTML = 
+            "Initial camera parameters: "+fx.toFixed(2)+", "+fy.toFixed(2)+", "+cx.toFixed(2)+", "+cy.toFixed(2);
+    }
 }
 
 document.querySelector('#startup').addEventListener('click', startup)

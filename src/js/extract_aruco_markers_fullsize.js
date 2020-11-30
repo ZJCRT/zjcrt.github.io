@@ -3,9 +3,9 @@
 Steffen Urban, November 2020, Carl Zeiss AG
 */
 
-function extractArucoFullSize(image_payload, aruco_board, view_id_idx) {
+function extractArucoFullSize(gray_image, aruco_board, view_id_idx) {
 
-    const parameters = aruco_board["aruco_parameters"]
+    let parameters = aruco_board["aruco_parameters"];
      
     parameters.adaptiveThreshWinSizeMin = 3;
     parameters.adaptiveThreshWinSizeMax = 23;
@@ -16,16 +16,10 @@ function extractArucoFullSize(image_payload, aruco_board, view_id_idx) {
 
     // this is all new Aruco3 stuff
     parameters.useAruco3Detection = false;
-    //parameters.cameraMotionSpeed = 0.8;
-    //parameters.useGlobalThreshold = true;
-    //parameters.minSideLengthCanonicalImg = 16;
 
     let marker_ids = new cv.Mat();
     let marker_corners  = new cv.MatVector();
-    let gray_image = new cv.Mat();
 
-    // "video" is the id of the video tag
-    cv.cvtColor(image_payload, gray_image, cv.COLOR_RGBA2GRAY);
     // detect markers
     cv.detectMarkers(gray_image, aruco_board["aruco_dictionary"], marker_corners, marker_ids, parameters);
 
@@ -54,7 +48,6 @@ function extractArucoFullSize(image_payload, aruco_board, view_id_idx) {
               "corners_js" : corners_js,
               "aruco_ids" : marker_ids_js,
               "image_size" : {width : gray_image.cols, height : gray_image.rows}};
-    gray_image.delete();
     marker_corners.delete();
     marker_ids.delete();
     return result;
