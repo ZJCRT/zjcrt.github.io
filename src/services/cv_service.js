@@ -70,6 +70,10 @@ class CV_SERVICE {
     returnArucoBoard(payload) {
       return this._dispatch({ msg: 'returnArucoBoard', payload });
     }
+
+    estimateInitialCamera(payload) {
+      return this._dispatch({ msg: 'estimateInitialCamera', payload });
+    }
   }
   
   // Export the same instant everywhere

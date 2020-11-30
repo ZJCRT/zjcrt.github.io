@@ -8,13 +8,47 @@ Steffen Urban, November 2020, Carl Zeiss AG
 */
 
 
+function estimateInitialCameraSub(init_scene) {
 
-function estimateInitialCameraSub() {
+    let all_object_pts = new cv.MatVector();
+    let all_corner_pts = new cv.MatVector();
 
-    cam_mat = cv.initCameraMatrix2D(pts3_cont_vec, pts2_cont_vec, img_size);
+    // convert 
+    const views = Object.keys(init_scene); // get all views
+    let pts2d = new cv.Mat();
+    let pts3d = new cv.Mat();
+    views.forEach((view, index) => {
+        const nr_pts = init_scene[view]["obj_pts"].length / 3;
+        console.log(nr_pts)
+        pts2d = cv.matFromArray(nr_pts, 2, cv.CV_32FC1, init_scene[view]["img_pts"]);
+        pts3d = cv.matFromArray(nr_pts, 3, cv.CV_32FC1, init_scene[view]["obj_pts"]);
+        all_object_pts.push_back(pts3d);
+        all_corner_pts.push_back(pts2d);
+    });
+
+    const first_key = Object.keys(init_scene)[0]
+    const img_size =  init_scene[first_key]["image_size"];
+
+    let camera_matrix = new cv.Mat();
+    // This only works for planar calibration patterns!
+    camera_matrix = cv.initCameraMatrix2D(all_object_pts, all_corner_pts, img_size);
+
+    cam_calib_js = [[camera_matrix.doubleAt(0,0), 0.0,  camera_matrix.doubleAt(0,2)],
+                    [0.0, camera_matrix.doubleAt(1,1),  camera_matrix.doubleAt(1,2)],
+                    [0.0,                         0.0,                         1.0]];
+
+    init_scene["camera_matrix"] = cam_calib_js;
+
+    camera_matrix.delete();
+    pts2d.delete();
+    pts3d.delete();
+    all_corner_pts.delete();
+    all_object_pts.delete();
+
+    return init_scene;
 }
 
-function calibrateCameraSub(backgroundScene) {
+function calibrateCameraSub(background_scene) {
 
     let CALIB_FLAGS = cv.CALIB_FIX_ASPECT_RATIO + cv.CALIB_ZERO_TANGENT_DIST;
 
@@ -22,20 +56,20 @@ function calibrateCameraSub(backgroundScene) {
     let all_corner_pts = new cv.MatVector();
 
     // convert 
-    const views = Object.keys(backgroundScene); // get all views
+    const views = Object.keys(background_scene); // get all views
+    let pts2d = new cv.Mat();
+    let pts3d = new cv.Mat();
     views.forEach((view, index) => {
-        const nr_pts = backgroundScene[view]["obj_pts"].length / 3;
+        const nr_pts = background_scene[view]["obj_pts"].length / 3;
         console.log(nr_pts)
-        const pts2d = cv.matFromArray(nr_pts, 2, cv.CV_32FC1, backgroundScene[view]["img_pts"]);
-        const pts3d = cv.matFromArray(nr_pts, 3, cv.CV_32FC1, backgroundScene[view]["obj_pts"]);
+        pts2d = cv.matFromArray(nr_pts, 2, cv.CV_32FC1, background_scene[view]["img_pts"]);
+        pts3d = cv.matFromArray(nr_pts, 3, cv.CV_32FC1, background_scene[view]["obj_pts"]);
         all_object_pts.push_back(pts3d);
         all_corner_pts.push_back(pts2d);
     });
 
-
-    console.log("calibration finished. cleared all cv.Mat()");
-    const first_key = Object.keys(backgroundScene)[0]
-    const img_size =  backgroundScene[first_key]["image_size"];
+    const first_key = Object.keys(background_scene)[0]
+    const img_size =  background_scene[first_key]["image_size"];
 
     
     let rvecs = new cv.MatVector();
@@ -62,13 +96,13 @@ function calibrateCameraSub(backgroundScene) {
     }
     // save standard deviation for intrinsics
     // 18 values, order is fx, fy, cx, cy, k1, k2, p1, p2, k3, k4, k5, k6, s1, s2, s3, s4, taux, tauy
-    backgroundScene["std_intrinsics_calibration"] = std_devs_intrinsics;
-    backgroundScene["camera_matrix"] = cam_calib_js;
-    backgroundScene["distortion_coefficients"] = dist_coeffs_js;
+    background_scene["std_intrinsics_calibration"] = std_devs_intrinsics;
+    background_scene["camera_matrix"] = cam_calib_js;
+    background_scene["distortion_coefficients"] = dist_coeffs_js;
     for (let i = 0 ; i < views.length; ++i) {
         const view_name = views[i];
-        backgroundScene[view_name]["per_view_error"] = per_view_errors.doubleAt(i,0);
-        backgroundScene[view_name]["std_extrinsics"] = [
+        background_scene[view_name]["per_view_error"] = per_view_errors.doubleAt(i,0);
+        background_scene[view_name]["std_extrinsics"] = [
             std_deviations_extrinsics.doubleAt(6*i+0),
             std_deviations_extrinsics.doubleAt(6*i+1),
             std_deviations_extrinsics.doubleAt(6*i+2),
@@ -77,7 +111,7 @@ function calibrateCameraSub(backgroundScene) {
             std_deviations_extrinsics.doubleAt(6*i+5)];
     }
     
-    backgroundScene["num_views"] = views.length;
+    background_scene["num_views"] = views.length;
 
     rvecs.delete();
     tvecs.delete();
@@ -88,7 +122,9 @@ function calibrateCameraSub(backgroundScene) {
     per_view_errors.delete();
     all_object_pts.delete();
     all_corner_pts.delete();
+    pts2d.delete();
+    pts3d.delete();
     console.log("calibration finished. cleared all cv.Mat()");
 
-    return backgroundScene;
+    return background_scene;
 }

@@ -63,6 +63,15 @@ function returnArucoBoard({msg, payload}) {
     postMessage({ msg, payload: aruco_board});  
 }
 
+// quick initial camera intrinsics estimation
+// Input: the initScene 
+// Output: the initScene with calibration for one frame
+function estimateInitialCamera({ msg, payload }) {
+  const init_scene = estimateInitialCameraSub(payload);
+  postMessage({ msg, payload: init_scene});
+}
+
+
 
 /**
  * With OpenCV we have to work the images as cv.Mat (matrices),
@@ -298,6 +307,10 @@ function poseEstimation({ msg, payload }) {
       case 'extractArucoForGlass':
         if (aruco_board != null) {
           return extractArucoForGlass(evt.data);
+        }
+      case 'estimateInitialCamera':
+        if (aruco_board != null) {
+          return estimateInitialCamera(evt.data);
         }
       default:
         break

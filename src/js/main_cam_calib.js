@@ -22,7 +22,11 @@ let videoDom = document.getElementById('video');
 
 // this object will store all extracted aruco corners and so on 
 // for camera calibration
-let backgroundScene = {};
+let background_scene = {};
+
+// this object will store all extracted aruco corners and so on 
+// for initial camera intrinsic estimation
+let init_scene = {};
 
 function log(...args) {
     // We pass the arguments to console.log() directly. Not an "arguments array"
@@ -108,16 +112,16 @@ async function takeImage() {
     document.getElementById("extract_status").innerHTML = "Finished aruco extraction of new frame in "+time_diff.toFixed(2)+"ms.";
 
     const view_id = "view_"+aruco_points.data.payload["view_id"]
-    // backgroundScene is global
-    backgroundScene[view_id] = {};
-    backgroundScene[view_id]["obj_pts"] = aruco_points.data.payload["obj_pts_js"];
-    backgroundScene[view_id]["img_pts"] = aruco_points.data.payload["corners_js"];
-    backgroundScene[view_id]["image_size"] = aruco_points.data.payload["image_size"];
+    // background_scene is global
+    background_scene[view_id] = {};
+    background_scene[view_id]["obj_pts"] = aruco_points.data.payload["obj_pts_js"];
+    background_scene[view_id]["img_pts"] = aruco_points.data.payload["corners_js"];
+    background_scene[view_id]["image_size"] = aruco_points.data.payload["image_size"];
 }
 
 async function runCameraCalibration() {
 
-    const calibrated_background = await cv_service.calibrateCamera(backgroundScene);
+    const calibrated_background = await cv_service.calibrateCamera(background_scene);
 
     const calib_data = calibrated_background.data.payload;
 
@@ -154,7 +158,35 @@ async function runCameraCalibration() {
 
 }
 
+async function takeInitImage() {
+    // get image from video context and send it to the aruco extraction worker
+    videoImageContext.drawImage(videoDom, 0, 0);
+    const imageData = videoImageContext.getImageData(0, 0, width, height);
+    document.getElementById("extract_status").innerHTML = "Start aruco extraction of new frame.";
+    let startTime = performance.now();
+    // extract aruco markers
+    const aruco_points = await cv_service.extractArucoForCalib(imageData);
+    var time_diff = performance.now() - startTime; //in ms 
+    document.getElementById("extract_status").innerHTML = "Finished aruco extraction of new frame in "+time_diff.toFixed(2)+"ms.";
+
+    const view_id = "view_"+aruco_points.data.payload["view_id"]
+    // background_scene is global
+    init_scene[view_id] = {};
+    init_scene[view_id]["obj_pts"] = aruco_points.data.payload["obj_pts_js"];
+    init_scene[view_id]["img_pts"] = aruco_points.data.payload["corners_js"];
+    init_scene[view_id]["image_size"] = aruco_points.data.payload["image_size"];
+
+    const camera = await cv_service.estimateInitialCamera(init_scene);
+    const fx = camera.data.payload["camera_matrix"][0][0].toFixed(2);
+    const fy = camera.data.payload["camera_matrix"][1][1].toFixed(2);
+    const cx = camera.data.payload["camera_matrix"][0][2].toFixed(2);
+    const cy = camera.data.payload["camera_matrix"][1][2].toFixed(2);
+    document.getElementById('initial_cam_params').innerHTML = "Initial camera parameters: "+fx+", "+fy+", "+cx+", "+cy;
+
+}
+
 document.querySelector('#startup').addEventListener('click', startup)
 document.querySelector('#stop').addEventListener('click', stopCamera)
 document.querySelector('#takeimage').addEventListener('click', takeImage)
+document.querySelector('#takeinitimage').addEventListener('click', takeInitImage)
 document.querySelector('#calibratecamera').addEventListener('click', runCameraCalibration)

@@ -4,16 +4,7 @@
         <link rel="stylesheet" href="css/style.css">
         <script src="js_libs/three.min.js" type="text/javascript"></script>
         <script src="js_libs/math.js" type="text/javascript"></script>
-        <!--<script type="text/javascript" src="js_libs/load_opencv.js"></script>-->
         <script type="module" src="js/main_cam_calib.js"></script>
-        <!--<script src="js/cv.worker.js" type="text/javascript"></script>
-        <script type="module" src="./services/cv_service.js"></script>
-        <script src="js/calibrate_camera.js" type="text/javascript"></script>
-        <script src="js/utils.js" type="text/javascript"></script>
-        <script src="js/extract_aruco_for_calib.js" type="text/javascript"></script>
-        <script src="resource/aruco_board_definition.js" type="text/javascript"></script>-->
-
-
     </head>
     <body>
     <div>
@@ -22,8 +13,12 @@
     <div id="aruco_test_content">
         <button class="btn btn-outline-success" role="button" id="startup">Start</button>
         <button class="btn btn-outline-danger" role="button" id="stop">Stop</button><br><br>
+        <button class="btn btn-outline-danger" role="button" id="takeinitimage">Take init image</button><br><br>
+
         <button class="btn btn-outline-danger" role="button" id="takeimage">Take background image</button><br><br>
         <button class="btn btn-outline-danger" role="button" id="calibratecamera">Enough images - start calibration</button><br><br>
+
+        <p id="initial_cam_params">Initial camera parameters: </p>
 
         <p id="webworkerlog"></p><br>
         <div id="container">
