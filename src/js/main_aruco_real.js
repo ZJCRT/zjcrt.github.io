@@ -38,14 +38,14 @@ const check_l = 0.015;
 const glass_pos = [0.06, 0.06]
 //// This is where we create our off-screen render target ////
 const geometry = new THREE.BoxGeometry(check_l,check_l,check_l);
-const glass_area = new THREE.BoxGeometry(0.06,0.015,0.05);
+const glass_area = new THREE.BoxGeometry(0.05,0.015,0.04);
 
-const material_black = new THREE.MeshPhongMaterial( { color: 0x000000, opacity: 0.5, transparent : false } );
-const material_transparent = new THREE.MeshPhongMaterial( { color: 0x1111ff, opacity: 0.5, transparent : true } );
+const material_black = new THREE.MeshPhongMaterial( { color: 0x000000, opacity: 1.0, transparent : false } );
+const material_transparent = new THREE.MeshPhongMaterial( { color: 0x0000ff, opacity: 0.25, transparent : true } );
 const cube = new THREE.Mesh( geometry, material_black );
 const glass_cube = new THREE.Mesh(glass_area, material_transparent)
 cube.position.set(check_l/2.,check_l/2.,0.);
-glass_cube.position.set(glass_pos[0],glass_pos[1],0.0);
+glass_cube.position.set(glass_pos[0],glass_pos[1],0.04);
 scene.add(cube);
 scene.add(glass_cube);
 
