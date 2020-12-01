@@ -35,8 +35,14 @@ function poseEstimationSub(gray_image, camera_matrix, dist_coeffs, aruco_board) 
     let corners_js = [];
     let obj_pts_js = [];
     let marker_ids_js = [];
+
     console.log("TRACKING: detected: "+marker_ids.rows+" markers.")
-    if (marker_ids.rows > 0) {
+    let valid_pose = false;
+    if (marker_ids.rows < 1) {
+        const m = new THREE.Matrix4();
+        m.set( 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.);
+        return {"hom_mat" : m, "quaternion_xyzw" : [0., 0., 0., 1.], "position" : [0., 0., 0.0], "valid" : false};
+    } else {
         for (let i = 0; i < marker_corners.size(); ++i) {
             const corners = marker_corners.get(i);
             const id = marker_ids.intAt(0,i);
@@ -59,29 +65,22 @@ function poseEstimationSub(gray_image, camera_matrix, dist_coeffs, aruco_board) 
         let rvec = new cv.Mat();
         let tvec = new cv.Mat();
         
-        let valid = cv.solvePnP(obj_points_cv, corner_points_cv, camera_matrix_cv, dist_coeffs_cv, rvec, tvec, false, cv.SOLVEPNP_IPPE)
+        valid = cv.solvePnP(obj_points_cv, corner_points_cv, 
+                            camera_matrix_cv, dist_coeffs_cv, 
+                            rvec, tvec, false, cv.SOLVEPNP_IPPE)
     
         let return_pose = {};
         if (valid) {
             return_pose = opencvPoseToThreejsPose(rvec, tvec);
+            return_pose["valid"] = true;
+        } else {
+            return_pose = {"hom_mat" : m, "quaternion_xyzw" : [0., 0., 0., 1.], "position" : [0., 0., 0.0], "valid" : false};
         }
         rvec.delete();
         tvec.delete();
         obj_points_cv.delete();
         corner_points_cv.delete();
         return return_pose;
-
     }
-    else {
-        const m = new THREE.Matrix4();
-        const quat = new THREE.Quaternion().set( 0, 0, 0, 1 ).normalize();
-        m.set( 1, 0, 0,  0,
-            0, 1, 0,  0,
-            0, 0, 1,  0,
-            0, 0, 0,  1, );
-        return {"hom_mat" : m, "rotation_q" : quat, "position" : [0.,0.,0.25]};
-    }
-
-
 }
 

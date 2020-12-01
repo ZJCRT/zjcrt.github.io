@@ -45,13 +45,13 @@ function opencvPoseToThreejsPose(rcv, tcv) {
     const R_ogl = math.multiply(R_cv_m_t, OCV2OGL)
 
     const hom_matrix = math_mat_Rt_to_threejs4x4(R_ogl, X_ogl)
-    let quaternion = new THREE.Quaternion();
-    quaternion.setFromRotationMatrix(hom_matrix);
+    let quat = new THREE.Quaternion();
+    quat.setFromRotationMatrix(hom_matrix);
 
     R_cv.delete();
 
     return {"hom_mat" : hom_matrix, 
-            "rotation_q" : quaternion, 
+            "quaternion_xyzw" : [quat._x, quat._y, quat._z,quat._w], 
             "position" : [X_ogl._data[0],X_ogl._data[1],X_ogl._data[2]]};
 }
 

@@ -34,7 +34,9 @@ renderer.shadowMap.enabled = true;
 
 let render_camera = null;
 //// This is where we create our off-screen render target ////
-const geometry = new THREE.BoxGeometry(0.08,0.08,0.08);
+const geometry = new THREE.BoxGeometry(0.015,0.015,0.015);
+const glass_area = new THREE.BoxGeometry(0.015,0.015,0.015);
+
 const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
 const cube = new THREE.Mesh( geometry, material );
 cube.position.set(0,0,0);
@@ -74,10 +76,14 @@ async function estimatePoseAruco() {
     const pose_payload = await cv_service.poseEstimation(
         {"image" : image_data, "camera_matrix" : camera_matrix, "dist_coeffs" : dist_coeffs});
     const pose = pose_payload.data.payload;
-    const new_quaternion = pose["rotation_q"];
+    const quat_xyzw = pose["quaternion_xyzw"];
+    const quaternion = new THREE.Quaternion().set(quat_xyzw[0],quat_xyzw[1],quat_xyzw[2],quat_xyzw[3]).normalize();
+
     console.log(pose["position"])
+    console.log(pose["quat_xyzw"])
+
     render_camera.position.set(pose["position"][0], pose["position"][1], pose["position"][2]);        
-    render_camera.quaternion.copy(new_quaternion);
+    render_camera.quaternion.copy(quaternion);
 }
 
 var constraints = {
