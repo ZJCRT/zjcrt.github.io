@@ -35,19 +35,39 @@ renderer.shadowMap.enabled = true;
 
 let render_camera = null;
 const check_l = 0.015;
-const glass_pos = [0.06, 0.06]
+const glass_pos = [0.06, 0.06, 0.0]
 //// This is where we create our off-screen render target ////
-const geometry = new THREE.BoxGeometry(check_l,check_l,check_l);
-const glass_area = new THREE.BoxGeometry(0.05,0.015,0.04);
+const g_area = [0.05,0.015,0.001]
+const glass_area = new THREE.BoxGeometry(g_area[0],g_area[1],g_area[2]);
 
-const material_black = new THREE.MeshPhongMaterial( { color: 0x000000, opacity: 1.0, transparent : false } );
-const material_transparent = new THREE.MeshPhongMaterial( { color: 0x0000ff, opacity: 0.25, transparent : true } );
-const cube = new THREE.Mesh( geometry, material_black );
+const material_transparent = new THREE.MeshBasicMaterial( { color: 0x00ffff, transparent : false } );
 const glass_cube = new THREE.Mesh(glass_area, material_transparent)
-cube.position.set(check_l/2.,check_l/2.,0.);
-glass_cube.position.set(glass_pos[0],glass_pos[1],0.04);
-scene.add(cube);
+glass_cube.position.set(glass_pos[0]-g_area[0]/2,glass_pos[1]-g_area[1]/2,g_area[2]/2.0);
+
 scene.add(glass_cube);
+
+// draw coordinate system
+const red_line = new THREE.LineBasicMaterial({color: 0xff0000, linewidth: 2});
+const x_line = [];
+x_line.push(new THREE.Vector3(0.0,0.0,0.0))
+x_line.push(new THREE.Vector3(check_l,0.0,0.0))
+const y_line = [];
+y_line.push(new THREE.Vector3(0.0,0.0,0.0))
+y_line.push(new THREE.Vector3(0.0,check_l,0.0))
+const z_line = [];
+z_line.push(new THREE.Vector3(0.0,0.0,0.0))
+z_line.push(new THREE.Vector3(0.0,0.0,check_l))
+const geometry_x = new THREE.BufferGeometry().setFromPoints(x_line);
+const geometry_y = new THREE.BufferGeometry().setFromPoints(y_line);
+const geometry_z = new THREE.BufferGeometry().setFromPoints(z_line);
+const linex = new THREE.Line( geometry_x,  new THREE.LineBasicMaterial({ color: 0xff0000 }));
+const liney = new THREE.Line( geometry_y,  new THREE.LineBasicMaterial({ color: 0x00ff00 }));
+const linez = new THREE.Line( geometry_z,  new THREE.LineBasicMaterial({ color: 0x0000ff }));
+scene.add(linex);
+scene.add(liney);
+scene.add(linez);
+
+
 
 function log(...args) {
     // We pass the arguments to console.log() directly. Not an "arguments array"
