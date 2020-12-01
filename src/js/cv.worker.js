@@ -12,9 +12,8 @@ self.importScripts('./find_points_in_glass.js');
 self.importScripts('./check_motion_blur.js');
 self.importScripts('./pose_estimation.js');
 
-const TRACKING_WIDTH = 320;
-const TRACKING_HEIGHT = 240;
-
+const TRACKING_WIDTH = 480;
+const TRACKING_HEIGHT = 360;
 // initialize aruco stuff 
 let aruco_board = null;
 let view_id_idx = 0;
@@ -99,11 +98,10 @@ function poseEstimation({ msg, payload }) {
     cv.resize(gray_image, gray_image, {width:TRACKING_WIDTH, height:TRACKING_HEIGHT});
     let camera_matrix = payload["camera_matrix"];
     const downsample_f = TRACKING_WIDTH / original_w;
-    camera_matrix[0][0] = camera_matrix[0][0] * downsample_f;
-    camera_matrix[1][1] = camera_matrix[1][1] * downsample_f;
-    camera_matrix[0][2] = camera_matrix[0][2] * downsample_f;
-    camera_matrix[1][2] = camera_matrix[1][2] * downsample_f;
-
+    camera_matrix[0] *= downsample_f;
+    camera_matrix[2] *= downsample_f;
+    camera_matrix[4] *= downsample_f;
+    camera_matrix[5] *= downsample_f;
     const return_pose = poseEstimationSub(gray_image, camera_matrix, payload["dist_coeffs"], aruco_board);
     gray_image.delete();
     input_image.delete();

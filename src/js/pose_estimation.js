@@ -27,6 +27,7 @@ function poseEstimationSub(gray_image, camera_matrix, dist_coeffs, aruco_board) 
     let marker_ids = new cv.Mat();
     let marker_corners  = new cv.MatVector();
 
+    let startTime = performance.now();
     // detect markers
     parameters.minMarkerLengthRatioOriginalImg = last_min_seg_img_size;
     // detect markers
@@ -36,12 +37,14 @@ function poseEstimationSub(gray_image, camera_matrix, dist_coeffs, aruco_board) 
     let obj_pts_js = [];
     let marker_ids_js = [];
 
-    console.log("TRACKING: detected: "+marker_ids.rows+" markers.")
+    // console.log("TRACKING: detected: "+marker_ids.rows+" markers.")
     let valid_pose = false;
     if (marker_ids.rows < 1) {
         const m = new THREE.Matrix4();
         m.set( 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.);
-        return {"hom_mat" : m, "quaternion_xyzw" : [0., 0., 0., 1.], "position" : [0., 0., 0.0], "valid" : false};
+        return {"hom_mat" : m, "quaternion_xyzw" : [0., 0., 0., 1.], 
+                "position" : [0., 0., 0.0], "valid" : false,
+                "est_time" : performance.now() - startTime};
     } else {
         for (let i = 0; i < marker_corners.size(); ++i) {
             const corners = marker_corners.get(i);
@@ -64,17 +67,27 @@ function poseEstimationSub(gray_image, camera_matrix, dist_coeffs, aruco_board) 
 
         let rvec = new cv.Mat();
         let tvec = new cv.Mat();
-        
-        valid = cv.solvePnP(obj_points_cv, corner_points_cv, 
-                            camera_matrix_cv, dist_coeffs_cv, 
-                            rvec, tvec, false, cv.SOLVEPNP_IPPE)
+        if (marker_corners.size() == 1) {
+            valid_pose = cv.solvePnP(obj_points_cv, corner_points_cv, 
+                camera_matrix_cv, dist_coeffs_cv, 
+                rvec, tvec, false, cv.SOLVEPNP_IPPE_SQUARE)
+        } else {
+            valid_pose = cv.solvePnP(obj_points_cv, corner_points_cv, 
+                camera_matrix_cv, dist_coeffs_cv, 
+                rvec, tvec, false, cv.SOLVEPNP_IPPE)            
+        }
+
     
         let return_pose = {};
-        if (valid) {
+        const est_time = performance.now() - startTime;
+        if (valid_pose) {
             return_pose = opencvPoseToThreejsPose(rvec, tvec);
             return_pose["valid"] = true;
+            return_pose["est_time"] = est_time
         } else {
-            return_pose = {"hom_mat" : m, "quaternion_xyzw" : [0., 0., 0., 1.], "position" : [0., 0., 0.0], "valid" : false};
+            return_pose = {"hom_mat" : m, "quaternion_xyzw" : [0., 0., 0., 1.], 
+                           "position" : [0., 0., 0.], "valid" : false, 
+                           "est_time" : est_time};
         }
         rvec.delete();
         tvec.delete();

@@ -15,11 +15,12 @@ let stream = null;
 let loopIndex = 0;
 let init_scene = {};
 
+const min_init_images = 2;
 let field_of_view_render_cam = 45;
 let camera_initialized = false;
 let camera_matrix = null;
 let dist_coeffs = null;
-let run_interval = 25;
+let run_interval = 30;
 let render_cam_initialized = false;
 // setup a basic scene
 let scene = new THREE.Scene();
@@ -33,14 +34,20 @@ let videoDom = document.getElementById('video');
 renderer.shadowMap.enabled = true;
 
 let render_camera = null;
+const check_l = 0.015;
+const glass_pos = [0.06, 0.06]
 //// This is where we create our off-screen render target ////
-const geometry = new THREE.BoxGeometry(0.015,0.015,0.015);
-const glass_area = new THREE.BoxGeometry(0.015,0.015,0.015);
+const geometry = new THREE.BoxGeometry(check_l,check_l,check_l);
+const glass_area = new THREE.BoxGeometry(0.06,0.015,0.05);
 
-const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-const cube = new THREE.Mesh( geometry, material );
-cube.position.set(0,0,0);
+const material_black = new THREE.MeshPhongMaterial( { color: 0x000000, opacity: 0.5, transparent : false } );
+const material_transparent = new THREE.MeshPhongMaterial( { color: 0x1111ff, opacity: 0.5, transparent : true } );
+const cube = new THREE.Mesh( geometry, material_black );
+const glass_cube = new THREE.Mesh(glass_area, material_transparent)
+cube.position.set(check_l/2.,check_l/2.,0.);
+glass_cube.position.set(glass_pos[0],glass_pos[1],0.0);
 scene.add(cube);
+scene.add(glass_cube);
 
 function log(...args) {
     // We pass the arguments to console.log() directly. Not an "arguments array"
@@ -79,11 +86,26 @@ async function estimatePoseAruco() {
     const quat_xyzw = pose["quaternion_xyzw"];
     const quaternion = new THREE.Quaternion().set(quat_xyzw[0],quat_xyzw[1],quat_xyzw[2],quat_xyzw[3]).normalize();
 
-    console.log(pose["position"])
-    console.log(pose["quat_xyzw"])
-
+    if (pose["valid"]) {
+        document.getElementById("cam_pose_status").innerHTML = "Cam pose VALID. Pose (xyz, qxqyqzqw): "+
+            pose["position"][0].toFixed(3) + ", " + pose["position"][1].toFixed(3)+ ", " + pose["position"][2].toFixed(3) + ", " + 
+            quat_xyzw[0].toFixed(3) + ", " + quat_xyzw[1].toFixed(3)+ ", " + quat_xyzw[2].toFixed(3) +", " + quat_xyzw[3].toFixed(3);
+        document.getElementById("cam_pose_status").style.color = "green";
+    } else {
+        document.getElementById("cam_pose_status").innerHTML = "Cam pose INVALID. Pose (xyz, qxqyqzqw): "+
+            pose["position"][0].toFixed(3) + ", " + pose["position"][1].toFixed(3)+ ", " + pose["position"][2].toFixed(3) + ", " +
+            quat_xyzw[0].toFixed(3) + ", " + quat_xyzw[1].toFixed(3)+ ", " + quat_xyzw[2].toFixed(3) +", " + quat_xyzw[3].toFixed(3);
+        document.getElementById("cam_pose_status").style.color = "red";
+    }
+    document.getElementById("trackingtime").innerHTML = "Tracking time: "+pose["est_time"].toFixed(2);
+    if (pose["est_time"] > 30) {
+        document.getElementById("trackingtime").style.color = "red";
+    } else {
+        document.getElementById("trackingtime").style.color = "green";
+    }
     render_camera.position.set(pose["position"][0], pose["position"][1], pose["position"][2]);        
     render_camera.quaternion.copy(quaternion);
+
 }
 
 var constraints = {
@@ -99,17 +121,16 @@ function renderWorker() {
     // Processing image
     loopIndex = setInterval(
         function(){ 
-            if (!render_cam_initialized) {
+            if (!render_cam_initialized & camera_initialized) {
                 render_camera = new THREE.PerspectiveCamera(field_of_view_render_cam, width/height, 0.01, 2);
                 renderer.setSize(width, height);
-                render_cam_initialized = true;
                 start.disabled = true;
+                document.getElementById("video").style.display = "none"; // hide video
+                render_cam_initialized = true;
             }
             if (camera_initialized) {
                 document.getElementById("log").innerHTML = "Tracking!"
                 document.getElementById("log").style.color = "green";
-                // hide video
-                //document.getElementById("video").style.display = "none";
                 estimatePoseAruco();
                 render(); 
             }
@@ -198,10 +219,15 @@ async function estimateCameraIntrinsics() {
         field_of_view_render_cam = 2.0 * Math.atan(height / (2.0*fy)) * 180.0 / Math.PI;
         document.getElementById('FoV').innerHTML = "Vertical field of view initialized with: "+field_of_view_render_cam.toFixed(2);
 
-        document.getElementById("log").innerHTML = "Camera initialized. You can start tracking now!";
+        document.getElementById("log").innerHTML = "Camera initializing. Move it around and take another "+
+            (min_init_images-aruco_points.data.payload["view_id"])+" images!";
         document.getElementById("log").style.color = "green";
 
-        camera_initialized = true;
+        if (aruco_points.data.payload["view_id"] >= min_init_images) {
+            camera_initialized = true;
+            document.getElementById("log").innerHTML = "Camera initialized. You can start tracking now!";
+            document.getElementById("log").style.color = "green";
+        }
     }
     
 }
