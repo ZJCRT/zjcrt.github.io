@@ -12,8 +12,8 @@ self.importScripts('./find_points_in_glass.js');
 self.importScripts('./check_motion_blur.js');
 self.importScripts('./pose_estimation.js');
 
-const TRACKING_WIDTH = 640;
-const TRACKING_HEIGHT = 480;
+const TRACKING_WIDTH = 320;
+const TRACKING_HEIGHT = 240;
 
 // initialize aruco stuff 
 let aruco_board = null;
