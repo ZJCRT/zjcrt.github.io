@@ -106,7 +106,7 @@ async function takeImage() {
     document.getElementById("extract_status").innerHTML = "Start aruco extraction of new frame.";
     let startTime = performance.now();
     // extract aruco markers
-    const aruco_points = await cv_service.extractArucoForCalib({"image" : imageData,"view_id" : cur_view_id});
+    const aruco_points = await cv_service.extractArucoForCalib({"image" : imageData, "view_id" : cur_view_id});
 
     var time_diff = performance.now() - startTime; //in ms 
     document.getElementById("extract_status").innerHTML = "Finished aruco extraction of new frame in "+time_diff.toFixed(2)+"ms.";
