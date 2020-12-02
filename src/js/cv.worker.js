@@ -14,24 +14,22 @@ self.importScripts('./pose_estimation.js');
 
 const TRACKING_WIDTH = 480;
 const TRACKING_HEIGHT = 360;
-// initialize aruco stuff 
-let view_id_idx = 0;
+
 
 // extracts Aruco markers for camera calibration
 function extractArucoForCalib({ msg, payload }) {
-    const input_image = cv.matFromImageData(payload);
+    const input_image = cv.matFromImageData(payload["image"]);
     // convert to grayscale image and check motion blur
     let gray_image = new cv.Mat();
     cv.cvtColor(input_image, gray_image, cv.COLOR_RGBA2GRAY);
     const is_blurry = hasMotionBlur(gray_image);
     let aruco_board = init_aruco();
     let marker_dict = {};
-  
+    
     if (!is_blurry["has_motion_blur"]) {
-        marker_dict = extractArucoFullSize(gray_image, aruco_board, view_id_idx);
-        // now check reprojection errors and select glass points
-        view_id_idx += 1;
+        marker_dict = extractArucoFullSize(gray_image, aruco_board, payload["view_id"]);
     }
+
     marker_dict["has_motion_blur"] = is_blurry["has_motion_blur"];
     marker_dict["laplacian_variance"] = is_blurry["laplacian_variance"];
     
@@ -59,12 +57,11 @@ function extractArucoForGlass({msg, payload}) {
     let marker_dict = {};
     let segmented_markers = {};
     if (!is_blurry["has_motion_blur"]) {
-        marker_dict = extractArucoFullSize(input_image, aruco_board, view_id_idx);
+        marker_dict = extractArucoFullSize(input_image, aruco_board, payload["view_id"]);
         // now check reprojection errors and select glass points
         segmented_markers = findPointsInGlass(
           marker_dict, payload["intrinsics"], aruco_board, payload["glass_bbox"], payload["hyperparams"]);
-        segmented_markers["view_id"] = view_id_idx;
-        view_id_idx += 1;
+        segmented_markers["view_id"] = payload["view_id"];
     } 
 
     segmented_markers["has_motion_blur"] = is_blurry["has_motion_blur"];
@@ -93,7 +90,7 @@ function poseEstimation({ msg, payload }) {
     const input_image = cv.matFromImageData(payload["image"]);
     let gray_image = new cv.Mat();
     let aruco_board = init_aruco();
-    
+
     // "video" is the id of the video tag
     cv.cvtColor(input_image, gray_image, cv.COLOR_RGBA2GRAY);
     const original_w = gray_image.cols;

@@ -19,7 +19,7 @@ let videoImage = document.getElementById('video_canvas');
 var videoImageContext = videoImage.getContext("2d");
 let videoDom = document.getElementById('video');
 
-
+let cur_view_id = 0;
 // this object will store all extracted aruco corners and so on 
 // for camera calibration
 let background_scene = {};
@@ -106,7 +106,7 @@ async function takeImage() {
     document.getElementById("extract_status").innerHTML = "Start aruco extraction of new frame.";
     let startTime = performance.now();
     // extract aruco markers
-    const aruco_points = await cv_service.extractArucoForCalib(imageData);
+    const aruco_points = await cv_service.extractArucoForCalib({"image" : imageData,"view_id" : cur_view_id});
 
     var time_diff = performance.now() - startTime; //in ms 
     document.getElementById("extract_status").innerHTML = "Finished aruco extraction of new frame in "+time_diff.toFixed(2)+"ms.";
@@ -116,6 +116,7 @@ async function takeImage() {
         document.getElementById("warning_blur").style.color = 'red';
         document.getElementById("warning_blur").innerHTML = "Motion blur too high. Move slowly!";
     } else {
+        cur_view_id += 1;
         document.getElementById("warning_blur").style.color = 'green';
         document.getElementById("warning_blur").innerHTML = "Motion blur ok. Saving image and extracting corners!";
         const view_id = "view_"+aruco_points.data.payload["view_id"]
@@ -173,7 +174,7 @@ async function takeInitImage() {
     document.getElementById("extract_status").innerHTML = "Start aruco extraction of new frame.";
     let startTime = performance.now();
     // extract aruco markers
-    const aruco_points = await cv_service.extractArucoForCalib(imageData);
+    const aruco_points = await cv_service.extractArucoForCalib({"image" : imageData, "view_id" : cur_view_id});
     var time_diff = performance.now() - startTime; //in ms 
     document.getElementById("extract_status").innerHTML = "Finished aruco extraction of new frame in "+time_diff.toFixed(2)+"ms.";
     document.getElementById("laplacian_blur").innerHTML = "Laplacian variance blur level: "+aruco_points.data.payload["laplacian_variance"].toFixed(2);
@@ -182,6 +183,7 @@ async function takeInitImage() {
         document.getElementById("warning_blur").style.color = 'red';
         document.getElementById("warning_blur").innerHTML = "Motion blur too high. Move slowly!";
     } else {
+        cur_view_id += 1;
         document.getElementById("warning_blur").style.color = 'green';
         document.getElementById("warning_blur").innerHTML = "Motion blur ok. Saving image and extracting corners!";
 

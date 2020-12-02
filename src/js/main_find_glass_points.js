@@ -39,6 +39,7 @@ const intrinsics_test_img = [1075.054, 1082.1237, 726.064, 540.432, 0.0277482, -
 // for camera calibration
 let glassScene = {};
 
+let cur_view_id = 0;
 
 
 function log(...args) {
@@ -201,9 +202,9 @@ async function takeImage() {
 
         // extract aruco markers
         const aruco_points = await cv_service.extractArucoForGlass(
-            {'image' : imageData, 'glass_bbox' : glass_bbox, 'intrinsics' : intrinsics});
+            {'image' : imageData, 'glass_bbox' : glass_bbox, 'intrinsics' : intrinsics, 'view_id' : cur_view_id});
 
-
+        cur_view_id += 1;
         const view_id = "view_"+aruco_points.data.payload["view_id"]
         // glassScene is global
         glassScene[view_id] = {};
@@ -241,8 +242,11 @@ async function startCalc() {
 
         // extract aruco markers
         const aruco_points = await cv_service.extractArucoForGlass(
-            {'image' : image_data, 'glass_bbox' : glass_bbox, 'intrinsics' : intrinsics_test_img, "hyperparams" : hyperparams});
+            {'image' : image_data, 'glass_bbox' : glass_bbox, 
+            'intrinsics' : intrinsics_test_img, "hyperparams" : hyperparams,
+            'view_id' : cur_view_id});
 
+        cur_view_id += 1;
 
         const view_id = "view_"+aruco_points.data.payload["view_id"]
         // glassScene is global
