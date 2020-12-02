@@ -188,7 +188,7 @@ self.onmessage = function (evt) {
     }
     case 'poseEstimation':
         return poseEstimation(evt.data);
-      
+
     case 'extractArucoForCalib':
         return extractArucoForCalib(evt.data);
       

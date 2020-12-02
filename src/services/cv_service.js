@@ -40,7 +40,7 @@ class CV_SERVICE {
   
       // Capture events and save [status, event] inside the _status object
       this.worker.onmessage = e => this._status[e.data.msg] = ['done', e];
-      this.worker.onerror = e => this._status[e.data.msg] = ['error', e];
+      //this.worker.onerror = e => this._status[e.data.msg] = ['error', e];
       return this._dispatch({ msg: 'load' });
     }
   
