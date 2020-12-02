@@ -57,7 +57,7 @@ function extractArucoForGlass({msg, payload}) {
     let marker_dict = {};
     let segmented_markers = {};
     if (!is_blurry["has_motion_blur"]) {
-        marker_dict = extractArucoFullSize(input_image, aruco_board, payload["view_id"]);
+        marker_dict = extractArucoFullSize(gray_image, aruco_board, payload["view_id"]);
         // now check reprojection errors and select glass points
         segmented_markers = findPointsInGlass(
           marker_dict, payload["intrinsics"], aruco_board, payload["glass_bbox"], payload["hyperparams"]);
@@ -68,6 +68,7 @@ function extractArucoForGlass({msg, payload}) {
     segmented_markers["laplacian_variance"] = is_blurry["laplacian_variance"];
 
     gray_image.delete();
+    input_image.delete();
     postMessage({ msg, payload: segmented_markers});    
 }
 
