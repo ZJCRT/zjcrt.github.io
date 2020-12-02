@@ -146,7 +146,7 @@ function renderWorker() {
                 render_camera = new THREE.PerspectiveCamera(field_of_view_render_cam, width/height, 0.01, 2);
                 renderer.setSize(width, height);
                 start.disabled = true;
-                document.getElementById("video").style.display = "none"; // hide video
+                //document.getElementById("video").style.display = "none"; // hide video
                 render_cam_initialized = true;
             }
             if (camera_initialized) {
