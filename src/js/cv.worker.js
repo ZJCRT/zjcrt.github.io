@@ -12,10 +12,6 @@ self.importScripts('./find_points_in_glass.js');
 self.importScripts('./check_motion_blur.js');
 self.importScripts('./pose_estimation.js');
 
-const TRACKING_WIDTH = 480;
-const TRACKING_HEIGHT = 360;
-
-
 // extracts Aruco markers for camera calibration
 function extractArucoForCalib({ msg, payload }) {
     const input_image = cv.matFromImageData(payload["image"]);
@@ -94,16 +90,8 @@ function poseEstimation({ msg, payload }) {
 
     // "video" is the id of the video tag
     cv.cvtColor(input_image, gray_image, cv.COLOR_RGBA2GRAY);
-    const original_w = gray_image.cols;
-    // resize to tracking size
-    cv.resize(gray_image, gray_image, {width:TRACKING_WIDTH, height:TRACKING_HEIGHT});
-    let camera_matrix = payload["camera_matrix"];
-    const downsample_f = TRACKING_WIDTH / original_w;
-    camera_matrix[0] *= downsample_f;
-    camera_matrix[2] *= downsample_f;
-    camera_matrix[4] *= downsample_f;
-    camera_matrix[5] *= downsample_f;
-    const return_pose = poseEstimationSub(gray_image, camera_matrix, payload["dist_coeffs"], aruco_board);
+
+    const return_pose = poseEstimationSub(gray_image, payload["camera_matrix"], payload["dist_coeffs"], aruco_board);
     gray_image.delete();
     input_image.delete();
     postMessage({ msg, payload: return_pose});
