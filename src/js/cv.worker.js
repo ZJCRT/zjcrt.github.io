@@ -179,10 +179,6 @@ self.onmessage = function (evt) {
       self.importScripts('../js_libs/opencv_wasm.js');
       waitForOpencv(function (success) {
         if (success) {
-          // initialize the aruco board here directly
-          aruco_board = init_aruco();
-          console.log("===================== aruco board initialized");
-
           postMessage({ msg: evt.data.msg });
           console.log("===================== opencv loaded");
         } 
@@ -191,29 +187,23 @@ self.onmessage = function (evt) {
       break
     }
     case 'poseEstimation':
-      if (aruco_board != null) {
         return poseEstimation(evt.data);
-      }
+      
     case 'extractArucoForCalib':
-      if (aruco_board != null) {
         return extractArucoForCalib(evt.data);
-      }
+      
     case 'calibrateCamera':
-      if (aruco_board != null) {
         return calibrateCamera(evt.data);
-      }
+      
     case 'returnArucoBoard':
-      if (aruco_board != null) {
         return returnArucoBoard(evt.data);
-      }
+      
     case 'extractArucoForGlass':
-      if (aruco_board != null) {
         return extractArucoForGlass(evt.data);
-      }
+      
     case 'estimateInitialCamera':
-      if (aruco_board != null) {
         return estimateInitialCamera(evt.data);
-      }
+      
     default:
       break
   }
