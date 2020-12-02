@@ -15,7 +15,6 @@ self.importScripts('./pose_estimation.js');
 const TRACKING_WIDTH = 480;
 const TRACKING_HEIGHT = 360;
 // initialize aruco stuff 
-let aruco_board = null;
 let view_id_idx = 0;
 
 // extracts Aruco markers for camera calibration
@@ -25,7 +24,7 @@ function extractArucoForCalib({ msg, payload }) {
     let gray_image = new cv.Mat();
     cv.cvtColor(input_image, gray_image, cv.COLOR_RGBA2GRAY);
     const is_blurry = hasMotionBlur(gray_image);
-
+    let aruco_board = init_aruco();
     let marker_dict = {};
   
     if (!is_blurry["has_motion_blur"]) {
@@ -55,6 +54,7 @@ function extractArucoForGlass({msg, payload}) {
     let gray_image = new cv.Mat();
     cv.cvtColor(input_image, gray_image, cv.COLOR_RGBA2GRAY);
     const is_blurry = hasMotionBlur(gray_image);
+    let aruco_board = init_aruco();
 
     let marker_dict = {};
     let segmented_markers = {};
@@ -76,6 +76,7 @@ function extractArucoForGlass({msg, payload}) {
 
 
 function returnArucoBoard({msg, payload}) {
+    let aruco_board = init_aruco();
     postMessage({ msg, payload: aruco_board});  
 }
 
@@ -91,6 +92,8 @@ function estimateInitialCamera({ msg, payload }) {
 function poseEstimation({ msg, payload }) {
     const input_image = cv.matFromImageData(payload["image"]);
     let gray_image = new cv.Mat();
+    let aruco_board = init_aruco();
+    
     // "video" is the id of the video tag
     cv.cvtColor(input_image, gray_image, cv.COLOR_RGBA2GRAY);
     const original_w = gray_image.cols;
