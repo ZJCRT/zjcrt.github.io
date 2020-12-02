@@ -15,6 +15,7 @@ let stream = null;
 let loopIndex = 0;
 let init_scene = {};
 
+let cur_view_id = 0;
 const min_init_images = 2;
 let field_of_view_render_cam = 45;
 let camera_initialized = false;
@@ -209,13 +210,14 @@ async function estimateCameraIntrinsics() {
     videoImageContext.drawImage(videoDom, 0, 0);
     const imageData = videoImageContext.getImageData(0, 0, width, height);
     // extract aruco markers
-    const aruco_points = await cv_service.extractArucoForCalib(imageData);
+    const aruco_points = await cv_service.extractArucoForCalib({"image" : imageData, "view_id" : cur_view_id});
 
     if (aruco_points.data.payload["has_motion_blur"]) {
         document.getElementById("log").style.color = 'red';
         document.getElementById("log").innerHTML = "Motion blur too high. Move slowly!";
         camera_initialized = false;
     } else {
+        cur_view_id += 1;
         document.getElementById("log").style.color = 'green';
         document.getElementById("log").innerHTML = "Motion blur ok. Saving image and estimating camera intrinsics!";
         
