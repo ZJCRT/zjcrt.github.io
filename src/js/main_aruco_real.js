@@ -21,7 +21,7 @@ let field_of_view_render_cam = 45;
 let camera_initialized = false;
 let camera_matrix = null;
 let dist_coeffs = null;
-let run_interval = 30;
+let run_interval = 50;
 let render_cam_initialized = false;
 // setup a basic scene
 let scene = new THREE.Scene();

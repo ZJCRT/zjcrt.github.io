@@ -58,8 +58,6 @@ function init_aruco() {
     // parameters.errorCorrectionRate = 0.6;
     parameters.useAruco3Detection = false;
 
-    console.log("Aruco board initialized.");
-
     return {"aruco_parameters" : parameters,
             "aurco_fullboard_object_points" : aruco_board_definition["points3d"],
             "aurco_tracking_marker_indices" : aruco_board_definition["largeMarkerIds"],
