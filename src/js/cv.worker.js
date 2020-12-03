@@ -20,7 +20,7 @@ function extractArucoForCalib({ msg, payload }) {
     let gray_image = new cv.Mat();
     cv.cvtColor(input_image, gray_image, cv.COLOR_RGBA2GRAY);
     const is_blurry = hasMotionBlur(gray_image);
-    let aruco_board = init_aruco();
+    let aruco_board = init_aruco(payload["use_new_board"]);
     let marker_dict = {};
     
     if (!is_blurry["has_motion_blur"]) {
@@ -49,7 +49,7 @@ function extractArucoForGlass({msg, payload}) {
     let gray_image = new cv.Mat();
     cv.cvtColor(input_image, gray_image, cv.COLOR_RGBA2GRAY);
     const is_blurry = hasMotionBlur(gray_image);
-    let aruco_board = init_aruco();
+    let aruco_board = init_aruco(payload["use_new_board"]);
 
     let marker_dict = {};
     let segmented_markers = {};

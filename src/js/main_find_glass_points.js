@@ -225,7 +225,7 @@ async function startCalc() {
 
     input_image_canvas_context.drawImage(input_image, 0, 0, width, height);
     const image_data = input_image_canvas_context.getImageData(0, 0, width, height);
-
+    
     // get aruco board dict from worker
     const aruco_board_res = await cv_service.returnArucoBoard();
     const aruco_board = aruco_board_res.data;
