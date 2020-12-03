@@ -101,8 +101,9 @@ function initVideo(ev){
 async function estimatePoseAruco() {
     videoImageContext.drawImage(videoDom, 0, 0);
     const image_data = videoImageContext.getImageData(0, 0, width, height);
+    const use_new_board_checker = document.getElementById("new_aruco_board").value;
     const pose_payload = await cv_service.poseEstimation(
-        {"image" : image_data, "camera_matrix" : camera_matrix, "dist_coeffs" : dist_coeffs});
+        {"image" : image_data, "camera_matrix" : camera_matrix, "dist_coeffs" : dist_coeffs, "use_new_board": use_new_board_checker.checked});
     const pose = pose_payload.data.payload;
     const quat_xyzw = pose["quaternion_xyzw"];
     const quaternion = new THREE.Quaternion().set(quat_xyzw[0],quat_xyzw[1],quat_xyzw[2],quat_xyzw[3]).normalize();

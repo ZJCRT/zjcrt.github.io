@@ -23,7 +23,7 @@ Steffen Urban November 2020
 //     xobj.send(null);  
 //  }
 
-function init_aruco() {
+function init_aruco(use_new_board = false) {
 
     // the board is defined in the html as <script type="text/javascript" src="aruco_board_definition.json"></script>
     // let aruco_board_definition = null;
@@ -32,7 +32,12 @@ function init_aruco() {
     //     aruco_board_definition = JSON.parse(response);
     //    });
 
-    const aruco_board_definition = ARUCO_BOARD;
+    let aruco_board_definition = null;
+    if (use_new_board) {
+        aruco_board_definition = ARUCO_BOARD_NEW;
+    } else {
+        aruco_board_definition = ARUCO_BOARD_OLD;
+    }
     let dictionary = new cv.aruco_Dictionary(aruco_board_definition["arucoDict"]);
     let parameters = new cv.aruco_DetectorParameters();
 

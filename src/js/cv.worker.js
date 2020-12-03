@@ -7,6 +7,7 @@ self.importScripts('./calibrate_camera.js');
 self.importScripts('./cv_utils.js');
 self.importScripts('./aruco_init.js');
 self.importScripts('../resource/aruco_board_definition.js');
+self.importScripts('../resource/new_aruco_board_definition.js');
 self.importScripts('./extract_aruco_markers_fullsize.js');
 self.importScripts('./find_points_in_glass.js');
 self.importScripts('./check_motion_blur.js');
@@ -86,7 +87,7 @@ function estimateInitialCamera({ msg, payload }) {
 function poseEstimation({ msg, payload }) {
     const input_image = cv.matFromImageData(payload["image"]);
     let gray_image = new cv.Mat();
-    let aruco_board = init_aruco();
+    let aruco_board = init_aruco(payload["use_new_board"]);
 
     // "video" is the id of the video tag
     cv.cvtColor(input_image, gray_image, cv.COLOR_RGBA2GRAY);
