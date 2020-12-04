@@ -1,8 +1,9 @@
 import * as THREE from '../js_libs/three.module.js';
 
 
-let video, videoTexture;
+let video, videoTexture, videoMesh;
 let renderer, scene, camera;
+const vidDistToCam = 2; //Distance from VideoTexture To Cam
 
 var mediaConstraints = {
     audio: false,
@@ -15,7 +16,7 @@ var mediaConstraints = {
 
 function init() {
 	camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight,0.1,100);
-	camera.position.z = 2 ;
+	camera.position.z = 0.5;
 
 	scene = new THREE.Scene();
 
@@ -28,11 +29,14 @@ function init() {
 	const geometry = new THREE.PlaneBufferGeometry(9,16);
 	geometry.scale(0.1,0.1,0.1);
 	const material = new THREE.MeshBasicMaterial({map: videoTexture});
-	const videoMesh = new THREE.Mesh(geometry,material);
-	scene.add(videoMesh);
+	videoMesh = new THREE.Mesh(geometry,material);
+	videoMesh.position.z= vidDistToCam * -1;
+	camera.add(videoMesh);
+	scene.add(camera);
+
+	updateCameraChange();
 	
 	renderer = new THREE.WebGLRenderer({antialias: true});
-	//renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	document.body.appendChild(renderer.domElement);
 
@@ -50,6 +54,15 @@ function init() {
 		console.error('MediaDevices interface not available.');
 	}
 }
+
+function updateCameraChange(){
+	camera.updateProjectionMatrix();
+	
+	//TODO check for other aspect ratio?
+	videoMesh.scale.y = Math.tan(camera.fov * Math.PI / 180 * 0.5) * vidDistToCam * 2 ;
+	videoMesh.scale.x = videoMesh.scale.y;
+}
+
 
 function render(){
 	requestAnimationFrame(render);
