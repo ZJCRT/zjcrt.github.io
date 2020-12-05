@@ -4,7 +4,7 @@ import cv_service from '../services/cv_service.js';
 
 
 let video, videoTexture, videoMesh;
-let renderer, scene, camera;
+let renderer, scene, render_camera, rendercanvas;
 const vidDistToCam = 2; //Distance from VideoTexture To Cam
 
 var mediaConstraints = {
@@ -17,10 +17,17 @@ var mediaConstraints = {
 };
 
 const debugGUI = new GUI();
-let calibGUI;
+let calibGUI, dimGUI;
 
 let options = {
 	openCV_ready: false,
+	dimensions: {
+		planebuffer: {
+			width: 9,
+			height: 16,
+			dist: 0
+		}
+	},
 	cameraCalibration: {
 		use_new_board_checker: false,
 		cur_view_id: 0,
@@ -61,7 +68,14 @@ function initDebugGUI(){
 	//https://codepen.io/programking/pen/MyOQpO
 
 	debugGUI.add(options, 'openCV_ready').listen();
-	
+
+	dimGUI = debugGUI.addFolder('Dimensions');
+	dimGUI.add(window, 'innerWidth').listen();
+	dimGUI.add(window, 'innerHeight').listen();
+	dimGUI.add(options.dimensions.planebuffer, 'width').listen();
+	dimGUI.add(options.dimensions.planebuffer, 'height').listen();
+	dimGUI.add(videoMesh.position, 'z').listen();
+
 	calibGUI = debugGUI.addFolder('Camera Calibration');
 	calibGUI.add(options.cameraCalibration, 'use_new_board_checker').listen();
 	calibGUI.add(options.cameraCalibration, 'min_init_images').listen();
@@ -78,33 +92,29 @@ function initDebugGUI(){
 }
 
 function init() {
-	camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight,0.1,100);
-	camera.position.z = 0.5;
+	render_camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight,0.1,100);
+	render_camera.position.z = 0.5;
 
 	scene = new THREE.Scene();
 
 	video =  document.getElementById("video");
 	videoTexture = new THREE.VideoTexture(video);
 	video.addEventListener( "loadedmetadata", function (e) {
-		// let textureGUI = debugGUI.addFolder('Video Texture');
-		// textureGUI.add(videoTexture.image, 'videoWidth');
-		// textureGUI.add(videoTexture.image, 'videoHeight');
 		console.log( "VideoTextureResolution: "+videoTexture.image.videoWidth+"x"+videoTexture.image.videoHeight );  
 	}, false );
 
-	const geometry = new THREE.PlaneBufferGeometry(9,16);
-	geometry.scale(0.1,0.1,0.1);
+	const geometry = new THREE.PlaneBufferGeometry(options.dimensions.planebuffer.width,options.dimensions.planebuffer.height);
 	const material = new THREE.MeshBasicMaterial({map: videoTexture});
 	videoMesh = new THREE.Mesh(geometry,material);
-	videoMesh.position.z= vidDistToCam * -1;
-	camera.add(videoMesh);
-	scene.add(camera);
+	render_camera.add(videoMesh);
+	scene.add(render_camera);
 
 	updateCameraChange();
 	
-	renderer = new THREE.WebGLRenderer({antialias: true});
+	rendercanvas = document.getElementById("rendercanvas");
+	renderer = new THREE.WebGLRenderer({canvas: rendercanvas, antialias: true});
 	renderer.setSize(window.innerWidth, window.innerHeight);
-	document.body.appendChild(renderer.domElement);
+	//document.body.appendChild(renderer.domElement);
 
 	//Get Camerastream
 	if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
@@ -137,19 +147,22 @@ function init() {
 
 
 function updateCameraChange(){
-	camera.updateProjectionMatrix();
-
-	//TODO check for other aspect ratio?
-	videoMesh.scale.y = Math.tan(camera.fov * Math.PI / 180 * 0.5) * vidDistToCam * 2 ;
-	videoMesh.scale.x = videoMesh.scale.y;
+	render_camera.updateProjectionMatrix();
+	let vFOV = THREE.MathUtils.degToRad(render_camera.fov);
+	options.dimensions.planebuffer.width
+	let aspect = options.dimensions.planebuffer.width / options.dimensions.planebuffer.height;
+	if(render_camera.aspect <= aspect ){
+		videoMesh.position.z = -1 * options.dimensions.planebuffer.height / (2 * Math.tan (vFOV/2));
+	} else {
+		let hFOV = vFOV * render_camera.aspect;
+		videoMesh.position.z = -1 * options.dimensions.planebuffer.width / (2 * Math.tan (hFOV/2));
+	}
 }
-
-
 
 
 function render(){
 	requestAnimationFrame(render);
-	renderer.render(scene,camera);
+	renderer.render(scene,render_camera);
 }
 
 let loopIndex = 0;
@@ -229,15 +242,20 @@ async function estimateCameraIntrinsics() {
 			options.debugText = "Camera initialized. You can start tracking now!";
             // document.getElementById("log").innerHTML = "Camera initialized. You can start tracking now!";
 			// document.getElementById("log").style.color = "green";
-			camera.fov = options.cameraCalibration.fov;
-			camera.aspect = videoTexture.image.videoWidth/videoTexture.image.videoHeight;
+			render_camera.fov = options.cameraCalibration.fov;
+			render_camera.aspect = videoTexture.image.videoWidth/videoTexture.image.videoHeight;
+			
+			
 			calibGUI.close();
 
 			updateCameraChange();
 
 			let camGUI = debugGUI.addFolder('camera');
-			camGUI.add(camera, 'fov').listen();
-			camGUI.add(camera, 'aspect').listen();
+			camGUI.add(render_camera, 'fov').listen();
+			camGUI.add(render_camera, 'aspect').listen();
+			camGUI.add(render_camera.position, 'x').listen();
+			camGUI.add(render_camera.position, 'y').listen();
+			camGUI.add(render_camera.position, 'z').listen();
 
 			let trackingGUI = debugGUI.addFolder('tracking');
 			trackingGUI.add(options.tracking, 'time').listen();
@@ -285,8 +303,8 @@ async function estimatePoseAruco(width=480, height=640) {
     // } else {
     //     document.getElementById("trackingtime").style.color = "green";
     // }
-    camera.position.set(pose["position"][0], pose["position"][1], pose["position"][2]);        
-    camera.quaternion.copy(quaternion);
+    render_camera.position.set(pose["position"][0], pose["position"][1], pose["position"][2]);        
+    render_camera.quaternion.copy(quaternion);
 }
 
 
@@ -300,12 +318,12 @@ function takeImageAndDownload(){
     canvas.height = 640;
 
     // Get the drawing context
-	ctx.drawImage(videoTexture.image, 0, 0, 480,640);
+	//ctx.drawImage(videoTexture.image, 0, 0, 480,640);
 	//const imageData = ctx.getImageData(0,0,1080,1920);
 
     //create img
     var img = document.createElement('img');
-    img.setAttribute('src', canvas.toDataURL());
+    img.setAttribute('src', rendercanvas.toDataURL());
 
     var myWindow = window.open("", "MsgWindow");
     myWindow.document.write(
@@ -323,3 +341,38 @@ function takeImageAndDownload(){
 init();
 render();
 initDebugGUI();
+
+
+
+const check_l = 0.015;
+const glass_pos = [0.06, 0.06, 0.0]
+//// This is where we create our off-screen render target ////
+const g_area = [0.05,0.015,0.001]
+const glass_area = new THREE.BoxGeometry(g_area[0],g_area[1],g_area[2]);
+
+const material_transparent = new THREE.MeshBasicMaterial( { color: 0x00ffff, transparent : false } );
+const glass_cube = new THREE.Mesh(glass_area, material_transparent)
+glass_cube.position.set(glass_pos[0]-g_area[0]/2,glass_pos[1]-g_area[1]/2,g_area[2]/2.0);
+
+scene.add(glass_cube);
+
+// draw coordinate system
+const red_line = new THREE.LineBasicMaterial({color: 0xff0000, linewidth: 2});
+const x_line = [];
+x_line.push(new THREE.Vector3(0.0,0.0,0.0))
+x_line.push(new THREE.Vector3(check_l,0.0,0.0))
+const y_line = [];
+y_line.push(new THREE.Vector3(0.0,0.0,0.0))
+y_line.push(new THREE.Vector3(0.0,check_l,0.0))
+const z_line = [];
+z_line.push(new THREE.Vector3(0.0,0.0,0.0))
+z_line.push(new THREE.Vector3(0.0,0.0,check_l))
+const geometry_x = new THREE.BufferGeometry().setFromPoints(x_line);
+const geometry_y = new THREE.BufferGeometry().setFromPoints(y_line);
+const geometry_z = new THREE.BufferGeometry().setFromPoints(z_line);
+const linex = new THREE.Line( geometry_x,  new THREE.LineBasicMaterial({ color: 0xff0000 }));
+const liney = new THREE.Line( geometry_y,  new THREE.LineBasicMaterial({ color: 0x00ff00 }));
+const linez = new THREE.Line( geometry_z,  new THREE.LineBasicMaterial({ color: 0x0000ff }));
+scene.add(linex);
+scene.add(liney);
+scene.add(linez);
