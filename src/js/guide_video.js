@@ -38,6 +38,11 @@ let options = {
 			takeImageAndDownload();
 		}
 	},
+	tracking: {
+		time: 0,
+		run_interval: 60
+	},
+
 	debugText: ""
 	// reset: function() {
 	// 	console.log("reset");
@@ -147,11 +152,17 @@ function render(){
 	renderer.render(scene,camera);
 }
 
-init();
-render();
-initDebugGUI();
+let loopIndex = 0;
 
-
+function renderWorker() {
+    // Processing image
+    loopIndex = setInterval(
+        function(){ 
+            if (camera_initialized) {
+                estimatePoseAruco();
+            }
+        }, options.tracking.run_interval);
+}
 
 
 //###### Calibration
@@ -227,9 +238,55 @@ async function estimateCameraIntrinsics() {
 			let camGUI = debugGUI.addFolder('camera');
 			camGUI.add(camera, 'fov').listen();
 			camGUI.add(camera, 'aspect').listen();
+
+			let trackingGUI = debugGUI.addFolder('tracking');
+			trackingGUI.add(options.tracking, 'time').listen();
+			trackingGUI.add(options.tracking, 'run_interval').listen();
+			trackingGUI.open();
+
+			renderWorker();
         }
     }
-    
+}
+
+// send image data to the webworker
+async function estimatePoseAruco(width=480, height=640) {
+	canvas.width = width;
+    canvas.height = height;
+
+    // get image from video context and send it to the aruco extraction worker
+	ctx.drawImage(videoTexture.image, 0, 0, width, height);
+	const imageData = ctx.getImageData(0,0,width, height);
+
+    const pose_payload = await cv_service.poseEstimation(
+        {"image" : imageData, "camera_matrix" : camera_matrix, "dist_coeffs" : dist_coeffs, "use_new_board": options.cameraCalibration.use_new_board_checker});
+    const pose = pose_payload.data.payload;
+    const quat_xyzw = pose["quaternion_xyzw"];
+    const quaternion = new THREE.Quaternion().set(quat_xyzw[0],quat_xyzw[1],quat_xyzw[2],quat_xyzw[3]).normalize();
+
+    if (pose["valid"]) {
+        // document.getElementById("cam_pose_status").innerHTML = "Cam pose VALID. Pose (xyz, qxqyqzqw): "+
+        //     pose["position"][0].toFixed(3) + ", " + pose["position"][1].toFixed(3)+ ", " + pose["position"][2].toFixed(3) + ", " + 
+        //     quat_xyzw[0].toFixed(3) + ", " + quat_xyzw[1].toFixed(3)+ ", " + quat_xyzw[2].toFixed(3) +", " + quat_xyzw[3].toFixed(3);
+		// document.getElementById("cam_pose_status").style.color = "green";
+		options.debugText = "";
+    } else {
+        // document.getElementById("cam_pose_status").innerHTML = "Cam pose INVALID. Pose (xyz, qxqyqzqw): "+
+        //     pose["position"][0].toFixed(3) + ", " + pose["position"][1].toFixed(3)+ ", " + pose["position"][2].toFixed(3) + ", " +
+        //     quat_xyzw[0].toFixed(3) + ", " + quat_xyzw[1].toFixed(3)+ ", " + quat_xyzw[2].toFixed(3) +", " + quat_xyzw[3].toFixed(3);
+		// document.getElementById("cam_pose_status").style.color = "red";
+		options.debugText = "Cam pose INVALID";
+		
+	}
+	options.tracking.time = pose["est_time"].toFixed(2);
+    // document.getElementById("trackingtime").innerHTML = "Tracking time: "+pose["est_time"].toFixed(2);
+    // if (pose["est_time"] > 30) {
+    //     document.getElementById("trackingtime").style.color = "red";
+    // } else {
+    //     document.getElementById("trackingtime").style.color = "green";
+    // }
+    camera.position.set(pose["position"][0], pose["position"][1], pose["position"][2]);        
+    camera.quaternion.copy(quaternion);
 }
 
 
@@ -239,11 +296,11 @@ async function estimateCameraIntrinsics() {
 function takeImageAndDownload(){
     // Create a canvas element
     // let canvas = document.createElement('canvas');
-    // canvas.width = video.videoWidth;
-    // canvas.height = video.videoHeight;
+    canvas.width = 480;
+    canvas.height = 640;
 
     // Get the drawing context
-	ctx.drawImage(videoTexture.image, 0, 0);
+	ctx.drawImage(videoTexture.image, 0, 0, 480,640);
 	//const imageData = ctx.getImageData(0,0,1080,1920);
 
     //create img
@@ -257,3 +314,12 @@ function takeImageAndDownload(){
     `)
     myWindow.document.body.appendChild(canvas);    
 }
+
+
+
+
+
+
+init();
+render();
+initDebugGUI();
