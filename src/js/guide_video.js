@@ -26,7 +26,12 @@ let options = {
 			width: 9,
 			height: 16,
 			dist: 0
-		}
+		},
+		trackScale: 3,
+		trackW: 0,
+		trackH: 0,
+		track_sx: 0,
+		track_sy: 0
 	},
 	cameraCalibration: {
 		use_new_board_checker: false,
@@ -51,17 +56,6 @@ let options = {
 	},
 
 	debugText: ""
-	// reset: function() {
-	// 	console.log("reset");
-	//   	this.use_new_board_checker = false;
-	//   camera.position.z = 75;
-	//   camera.position.x = 0;
-	//   camera.position.y = 0;
-	//   cube.scale.x = 1;
-	//   cube.scale.y = 1;
-	//   cube.scale.z = 1;
-	//   cube.material.wireframe = true;
-	// }
 };
 
 function initDebugGUI(){
@@ -75,6 +69,11 @@ function initDebugGUI(){
 	dimGUI.add(options.dimensions.planebuffer, 'width').listen();
 	dimGUI.add(options.dimensions.planebuffer, 'height').listen();
 	dimGUI.add(videoMesh.position, 'z').listen();
+	dimGUI.add(options.dimensions, 'trackScale').listen();
+	dimGUI.add(options.dimensions, 'trackW').listen();
+	dimGUI.add(options.dimensions, 'trackH').listen();
+	dimGUI.add(options.dimensions, 'track_sx').listen();
+	dimGUI.add(options.dimensions, 'track_sy').listen();
 
 	calibGUI = debugGUI.addFolder('Camera Calibration');
 	calibGUI.add(options.cameraCalibration, 'use_new_board_checker').listen();
@@ -108,13 +107,12 @@ function init() {
 	videoMesh = new THREE.Mesh(geometry,material);
 	render_camera.add(videoMesh);
 	scene.add(render_camera);
-
-	updateCameraChange();
 	
 	rendercanvas = document.getElementById("rendercanvas");
 	renderer = new THREE.WebGLRenderer({canvas: rendercanvas, antialias: true});
 	renderer.setSize(window.innerWidth, window.innerHeight);
-	//document.body.appendChild(renderer.domElement);
+
+	updateCameraChange();
 
 	//Get Camerastream
 	if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
@@ -153,10 +151,28 @@ function updateCameraChange(){
 	let aspect = options.dimensions.planebuffer.width / options.dimensions.planebuffer.height;
 	if(render_camera.aspect <= aspect ){
 		videoMesh.position.z = -1 * options.dimensions.planebuffer.height / (2 * Math.tan (vFOV/2));
+		
+		trackCanvas.height = 1920 / options.dimensions.trackScale;
+		options.dimensions.trackH = trackCanvas.height;
+		trackCanvas.width = trackCanvas.height*render_camera.aspect;
+		options.dimensions.trackW = trackCanvas.width;
+
+		
+		options.dimensions.track_sx = (1080- trackCanvas.width*options.dimensions.trackScale)/2;
 	} else {
 		let hFOV = vFOV * render_camera.aspect;
 		videoMesh.position.z = -1 * options.dimensions.planebuffer.width / (2 * Math.tan (hFOV/2));
+	
+		trackCanvas.width =1080 / options.dimensions.trackScale;
+		options.dimensions.trackW = trackCanvas.width;
+		trackCanvas.height = trackCanvas.width * (window.innerHeight/window.innerWidth);
+		
+		options.dimensions.track_sy = (1920 - trackCanvas.height*options.dimensions.trackScale) / 2;
+		
+		options.dimensions.trackH = trackCanvas.height;
 	}
+
+	//takeImageAndDownload();
 }
 
 
@@ -182,6 +198,9 @@ function renderWorker() {
 
 let canvas = document.createElement('canvas');
 let ctx = canvas.getContext('2d');
+
+let trackCanvas = document.createElement('canvas');
+let trackCTX = trackCanvas.getContext('2d');
 
 let camera_matrix, dist_coeffs;
 let camera_initialized = false;
@@ -267,14 +286,18 @@ async function estimateCameraIntrinsics() {
     }
 }
 
+let firstrun = true;
 // send image data to the webworker
-async function estimatePoseAruco(width=480, height=640) {
-	canvas.width = width;
-    canvas.height = height;
+async function estimatePoseAruco() {
+
+
+	// void ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+
 
     // get image from video context and send it to the aruco extraction worker
-	ctx.drawImage(videoTexture.image, 0, 0, width, height);
-	const imageData = ctx.getImageData(0,0,width, height);
+	//ctx.drawImage(videoTexture.image, 0, 0, width, height);
+	trackCTX.drawImage(videoTexture.image, options.dimensions.track_sx, options.dimensions.track_sx, options.dimensions.trackW*options.dimensions.trackScale, options.dimensions.trackH*options.dimensions.trackScale, 0, 0, options.dimensions.trackW, options.dimensions.trackH);
+	const imageData = trackCTX.getImageData(0,0,options.dimensions.trackW, options.dimensions.trackH);
 
     const pose_payload = await cv_service.poseEstimation(
         {"image" : imageData, "camera_matrix" : camera_matrix, "dist_coeffs" : dist_coeffs, "use_new_board": options.cameraCalibration.use_new_board_checker});
@@ -312,25 +335,22 @@ async function estimatePoseAruco(width=480, height=640) {
 
 //test images
 function takeImageAndDownload(){
-    // Create a canvas element
-    // let canvas = document.createElement('canvas');
-    canvas.width = 480;
-    canvas.height = 640;
 
-    // Get the drawing context
-	//ctx.drawImage(videoTexture.image, 0, 0, 480,640);
-	//const imageData = ctx.getImageData(0,0,1080,1920);
-
+	var tmp = document.createElement('canvas');
+	tmp.width = trackCanvas.width;
+	tmp.height = trackCanvas.height;
+	tmp.getContext('2d').drawImage(videoTexture.image, options.dimensions.track_sx, options.dimensions.track_sx, options.dimensions.trackW*options.dimensions.trackScale, options.dimensions.trackH*options.dimensions.trackScale, 0, 0, options.dimensions.trackW, options.dimensions.trackH);
+	
     //create img
     var img = document.createElement('img');
-    img.setAttribute('src', rendercanvas.toDataURL());
+    img.setAttribute('src', tmp.toDataURL());
 
     var myWindow = window.open("", "MsgWindow");
     myWindow.document.write(
-        `<h1>took image with ${canvas.width}x${canvas.height}<br/>
+        `<h1>took image with ${tmp.width}x${tmp.height}<br/>
         <a href="${img.src}" download>Download</a><br/></h1>
     `)
-    myWindow.document.body.appendChild(canvas);    
+    myWindow.document.body.appendChild(tmp);    
 }
 
 
