@@ -5,7 +5,6 @@ import cv_service from '../services/cv_service.js';
 
 let video, videoTexture, videoMesh;
 let renderer, scene, render_camera, rendercanvas;
-const vidDistToCam = 2; //Distance from VideoTexture To Cam
 
 var mediaConstraints = {
     audio: false,
@@ -17,6 +16,7 @@ var mediaConstraints = {
 };
 
 const debugGUI = new GUI();
+export {debugGUI};
 let calibGUI, dimGUI;
 
 let options = {
@@ -111,8 +111,8 @@ function init() {
 	//Get Camerastream
 	if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
 		navigator.mediaDevices.getUserMedia(mediaConstraints).then(function(stream){
-			console.log("VideoTrackSettings: ");
-			console.log(stream.getVideoTracks()[0].getSettings());
+			//console.log("VideoTrackSettings: ");
+			//console.log(stream.getVideoTracks()[0].getSettings());
 			video.srcObject = stream;
 			video.play();
 		}).catch(function(error){
@@ -134,6 +134,14 @@ function init() {
 			calibGUI.open();
 		}
     },false);
+}
+
+function stopCamera() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);    
+
+	video.pause();
+	video.srcObject.getVideoTracks()[0].stop();
+    video.srcObject = null;
 }
 
 
@@ -258,8 +266,6 @@ async function estimateCameraIntrinsics() {
 			trackingGUI.add(options.tracking, 'time').listen();
 			trackingGUI.add(options.tracking, 'run_interval').listen();
 			trackingGUI.open();
-
-			//renderWorker();
         }
     }
 }
@@ -308,7 +314,14 @@ async function estimatePoseAruco() {
 }
 
 
+init();
+render();
+initDebugGUI();
 
+window.addEventListener("beforeunload",stopCamera);
+
+
+// Debug-Stuff beyond this line
 
 //test images
 function takeImageAndDownload(){
@@ -327,15 +340,6 @@ function takeImageAndDownload(){
     `)
     myWindow.document.body.appendChild(tmp);    
 }
-
-
-
-
-
-
-init();
-render();
-initDebugGUI();
 
 
 
