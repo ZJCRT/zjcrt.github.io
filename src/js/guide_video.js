@@ -154,20 +154,25 @@ function updateCameraChange(){
 
 function render(){
 	requestAnimationFrame(render);
+
+	if(camera_initialized && ! poseEstimationRunning){
+		estimatePoseAruco();
+	}
+
 	renderer.render(scene,render_camera);
 }
 
-let loopIndex = 0;
+// let loopIndex = 0;
 
-function renderWorker() {
-    // Processing image
-    loopIndex = setInterval(
-        function(){ 
-            if (camera_initialized) {
-                estimatePoseAruco();
-            }
-        }, options.tracking.run_interval);
-}
+// function renderWorker() {
+//     // Processing image
+//     loopIndex = setInterval(
+//         function(){ 
+//             if (camera_initialized) {
+//                 estimatePoseAruco();
+//             }
+//         }, options.tracking.run_interval);
+// }
 
 
 //###### Calibration
@@ -254,14 +259,16 @@ async function estimateCameraIntrinsics() {
 			trackingGUI.add(options.tracking, 'run_interval').listen();
 			trackingGUI.open();
 
-			renderWorker();
+			//renderWorker();
         }
     }
 }
 
+let poseEstimationRunning = false;
 
 // send image data to the webworker
 async function estimatePoseAruco() {
+	poseEstimationRunning = true;
 
     // get image from video context and send it to the aruco extraction worker
 	ctx.drawImage(videoTexture.image, 0, 0);
@@ -295,7 +302,9 @@ async function estimatePoseAruco() {
     //     document.getElementById("trackingtime").style.color = "green";
     // }
     render_camera.position.set(pose["position"][0], pose["position"][1], pose["position"][2]);        
-    render_camera.quaternion.copy(quaternion);
+	render_camera.quaternion.copy(quaternion);
+	
+	poseEstimationRunning = false;
 }
 
 
