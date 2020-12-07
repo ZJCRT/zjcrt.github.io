@@ -23,8 +23,8 @@ let options = {
 	openCV_ready: false,
 	dimensions: {
 		planebuffer: {
-			width: 9,
-			height: 16,
+			width: 1.8,
+			height: 3.2,
 			dist: 0
 		},
 	},
@@ -141,7 +141,7 @@ function init() {
 function updateCameraChange(){
 	render_camera.updateProjectionMatrix();
 	let vFOV = THREE.MathUtils.degToRad(render_camera.fov);
-	options.dimensions.planebuffer.width
+
 	let aspect = options.dimensions.planebuffer.width / options.dimensions.planebuffer.height;
 	if(render_camera.aspect <= aspect ){
 		videoMesh.position.z = -1 * options.dimensions.planebuffer.height / (2 * Math.tan (vFOV/2));
