@@ -7,8 +7,8 @@ Steffen Urban, November 2020, Carl Zeiss AG
 
 let last_min_seg_img_size = 0.0;
 
-const TRACKING_WIDTH = 480;
-const TRACKING_HEIGHT = 360;
+const TRACKING_WIDTH = 360; 
+const TRACKING_HEIGHT = 640;
 
 
 function poseEstimationSub(gray_image, camera_matrix, dist_coeffs, aruco_board) {

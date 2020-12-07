@@ -27,11 +27,6 @@ let options = {
 			height: 16,
 			dist: 0
 		},
-		trackScale: 3,
-		trackW: 0,
-		trackH: 0,
-		track_sx: 0,
-		track_sy: 0
 	},
 	cameraCalibration: {
 		use_new_board_checker: false,
@@ -66,14 +61,11 @@ function initDebugGUI(){
 	dimGUI = debugGUI.addFolder('Dimensions');
 	dimGUI.add(window, 'innerWidth').listen();
 	dimGUI.add(window, 'innerHeight').listen();
+	dimGUI.add(videoTexture.image, 'videoWidth').listen();
+	dimGUI.add(videoTexture.image, 'videoHeight').listen();
 	dimGUI.add(options.dimensions.planebuffer, 'width').listen();
 	dimGUI.add(options.dimensions.planebuffer, 'height').listen();
 	dimGUI.add(videoMesh.position, 'z').listen();
-	dimGUI.add(options.dimensions, 'trackScale').listen();
-	dimGUI.add(options.dimensions, 'trackW').listen();
-	dimGUI.add(options.dimensions, 'trackH').listen();
-	dimGUI.add(options.dimensions, 'track_sx').listen();
-	dimGUI.add(options.dimensions, 'track_sy').listen();
 
 	calibGUI = debugGUI.addFolder('Camera Calibration');
 	calibGUI.add(options.cameraCalibration, 'use_new_board_checker').listen();
@@ -91,6 +83,8 @@ function initDebugGUI(){
 }
 
 function init() {
+
+	//Camera will be updated as soon as it is calibrated -> updateCameraChange()
 	render_camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight,0.1,100);
 	render_camera.position.z = 0.5;
 
@@ -151,28 +145,10 @@ function updateCameraChange(){
 	let aspect = options.dimensions.planebuffer.width / options.dimensions.planebuffer.height;
 	if(render_camera.aspect <= aspect ){
 		videoMesh.position.z = -1 * options.dimensions.planebuffer.height / (2 * Math.tan (vFOV/2));
-		
-		trackCanvas.height = 1920 / options.dimensions.trackScale;
-		options.dimensions.trackH = trackCanvas.height;
-		trackCanvas.width = trackCanvas.height*render_camera.aspect;
-		options.dimensions.trackW = trackCanvas.width;
-
-		
-		options.dimensions.track_sx = (1080- trackCanvas.width*options.dimensions.trackScale)/2;
 	} else {
 		let hFOV = vFOV * render_camera.aspect;
 		videoMesh.position.z = -1 * options.dimensions.planebuffer.width / (2 * Math.tan (hFOV/2));
-	
-		trackCanvas.width =1080 / options.dimensions.trackScale;
-		options.dimensions.trackW = trackCanvas.width;
-		trackCanvas.height = trackCanvas.width * (window.innerHeight/window.innerWidth);
-		
-		options.dimensions.track_sy = (1920 - trackCanvas.height*options.dimensions.trackScale) / 2;
-		
-		options.dimensions.trackH = trackCanvas.height;
 	}
-
-	//takeImageAndDownload();
 }
 
 
@@ -198,9 +174,6 @@ function renderWorker() {
 
 let canvas = document.createElement('canvas');
 let ctx = canvas.getContext('2d');
-
-let trackCanvas = document.createElement('canvas');
-let trackCTX = trackCanvas.getContext('2d');
 
 let camera_matrix, dist_coeffs;
 let camera_initialized = false;
@@ -286,18 +259,13 @@ async function estimateCameraIntrinsics() {
     }
 }
 
-let firstrun = true;
+
 // send image data to the webworker
 async function estimatePoseAruco() {
 
-
-	// void ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
-
-
     // get image from video context and send it to the aruco extraction worker
-	//ctx.drawImage(videoTexture.image, 0, 0, width, height);
-	trackCTX.drawImage(videoTexture.image, options.dimensions.track_sx, options.dimensions.track_sx, options.dimensions.trackW*options.dimensions.trackScale, options.dimensions.trackH*options.dimensions.trackScale, 0, 0, options.dimensions.trackW, options.dimensions.trackH);
-	const imageData = trackCTX.getImageData(0,0,options.dimensions.trackW, options.dimensions.trackH);
+	ctx.drawImage(videoTexture.image, 0, 0);
+	const imageData = ctx.getImageData(0,0,videoTexture.image.videoWidth,videoTexture.image.videoHeight);
 
     const pose_payload = await cv_service.poseEstimation(
         {"image" : imageData, "camera_matrix" : camera_matrix, "dist_coeffs" : dist_coeffs, "use_new_board": options.cameraCalibration.use_new_board_checker});
@@ -337,9 +305,7 @@ async function estimatePoseAruco() {
 function takeImageAndDownload(){
 
 	var tmp = document.createElement('canvas');
-	tmp.width = trackCanvas.width;
-	tmp.height = trackCanvas.height;
-	tmp.getContext('2d').drawImage(videoTexture.image, options.dimensions.track_sx, options.dimensions.track_sx, options.dimensions.trackW*options.dimensions.trackScale, options.dimensions.trackH*options.dimensions.trackScale, 0, 0, options.dimensions.trackW, options.dimensions.trackH);
+	tmp.getContext('2d').drawImage(videoTexture.image, canvas.width, canvas.height);
 	
     //create img
     var img = document.createElement('img');
