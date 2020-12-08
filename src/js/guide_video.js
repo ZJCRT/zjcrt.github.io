@@ -1,8 +1,7 @@
 import * as THREE from '../js_libs/three.module.js';
-import { GUI } from '../js_libs/dat.gui.module.js';
 import cv_service from '../services/cv_service.js';
 
-export{cv_service, debugGUI, options, scene, render_camera, estimateCameraIntrinsics, renderer};
+export{cv_service, options, scene, render_camera, estimateCameraIntrinsics, renderer};
 
 let video, videoTexture, videoMesh;
 let renderer, scene, render_camera, rendercanvas;
@@ -15,10 +14,6 @@ var mediaConstraints = {
 		facingMode: "environment"
     }
 };
-
-const debugGUI = new GUI();
-
-let calibGUI, dimGUI;
 
 let options = {
 	openCV_ready: false,
@@ -54,34 +49,6 @@ let options = {
 	debugText: ""
 };
 
-function initDebugGUI(){
-	//https://codepen.io/programking/pen/MyOQpO
-
-	debugGUI.add(options, 'openCV_ready').listen();
-
-	dimGUI = debugGUI.addFolder('Dimensions');
-	dimGUI.add(window, 'innerWidth').listen();
-	dimGUI.add(window, 'innerHeight').listen();
-	dimGUI.add(videoTexture.image, 'videoWidth').listen();
-	dimGUI.add(videoTexture.image, 'videoHeight').listen();
-	dimGUI.add(options.dimensions.planebuffer, 'width').listen();
-	dimGUI.add(options.dimensions.planebuffer, 'height').listen();
-	dimGUI.add(videoMesh.position, 'z').listen();
-
-	calibGUI = debugGUI.addFolder('Camera Calibration');
-	calibGUI.add(options.cameraCalibration, 'use_new_board_checker').listen();
-	calibGUI.add(options.cameraCalibration, 'min_init_images').listen();
-	calibGUI.add(options.cameraCalibration, 'cur_view_id').listen();
-	calibGUI.add(options.cameraCalibration, 'fx').listen();
-	calibGUI.add(options.cameraCalibration, 'fy').listen();
-	calibGUI.add(options.cameraCalibration, 'cx').listen();
-	calibGUI.add(options.cameraCalibration, 'cy').listen();
-	calibGUI.add(options.cameraCalibration, 'fov').listen();
-	calibGUI.add(options.cameraCalibration, 'takeImageAndDownload').listen();
-	
-	debugGUI.add(options, 'debugText').listen();
-	//debugGUI.add(options, 'reset');
-}
 
 function init() {
 
@@ -146,9 +113,6 @@ function addOpenCVLoadListener(callback){
 
 function openCVLoaded(){
 	options.openCV_ready = true;
-			
-	calibGUI.add(options.cameraCalibration, 'takeCalibImage').listen();
-	calibGUI.open();
 }
 
 function stopCamera() {
@@ -175,9 +139,11 @@ function updateCameraChange(){
 }
 
 function render(){
+
 	requestAnimationFrame(render);
 
 	if(camera_initialized && ! poseEstimationRunning){
+		console.log("go");
 		estimatePoseAruco();
 	}
 
@@ -268,23 +234,8 @@ async function estimateCameraIntrinsics(callback) {
 			render_camera.fov = options.cameraCalibration.fov;
 			render_camera.aspect = videoTexture.image.videoWidth/videoTexture.image.videoHeight;
 			
-			
-			calibGUI.close();
 
 			updateCameraChange();
-
-			let camGUI = debugGUI.addFolder('camera');
-			camGUI.add(render_camera, 'fov').listen();
-			camGUI.add(render_camera, 'aspect').listen();
-			camGUI.add(render_camera.position, 'x').listen();
-			camGUI.add(render_camera.position, 'y').listen();
-			camGUI.add(render_camera.position, 'z').listen();
-
-			let trackingGUI = debugGUI.addFolder('tracking');
-			trackingGUI.add(options.tracking, 'time').listen();
-			trackingGUI.add(options.tracking, 'run_interval').listen();
-			trackingGUI.open();
-			console.log("calib done");
 		}
 		
 		callback(remainingImages);
@@ -292,9 +243,21 @@ async function estimateCameraIntrinsics(callback) {
 }
 
 let poseEstimationRunning = false;
+//just to count fps of pose estimation
+const poseTimes = [];
+	
 
 // send image data to the webworker
 async function estimatePoseAruco() {
+	
+	//just fps calculations
+	const now = performance.now();
+	while (poseTimes.length > 0 && poseTimes[0] <= now - 1000) {
+		poseTimes.shift();
+	}
+	poseTimes.push(now);
+	document.getElementById("fps").innerText = poseTimes.length;
+
 	poseEstimationRunning = true;
 
     // get image from video context and send it to the aruco extraction worker
@@ -312,19 +275,21 @@ async function estimatePoseAruco() {
         //     pose["position"][0].toFixed(3) + ", " + pose["position"][1].toFixed(3)+ ", " + pose["position"][2].toFixed(3) + ", " + 
         //     quat_xyzw[0].toFixed(3) + ", " + quat_xyzw[1].toFixed(3)+ ", " + quat_xyzw[2].toFixed(3) +", " + quat_xyzw[3].toFixed(3);
 		// document.getElementById("cam_pose_status").style.color = "green";
-		options.debugText = "";
+		// options.debugText = "";
 
 		render_camera.position.set(pose["position"][0], pose["position"][1], pose["position"][2]);        
 		render_camera.quaternion.copy(quaternion);
+		document.getElementById("debug").innerText = "";
     } else {
         // document.getElementById("cam_pose_status").innerHTML = "Cam pose INVALID. Pose (xyz, qxqyqzqw): "+
         //     pose["position"][0].toFixed(3) + ", " + pose["position"][1].toFixed(3)+ ", " + pose["position"][2].toFixed(3) + ", " +
         //     quat_xyzw[0].toFixed(3) + ", " + quat_xyzw[1].toFixed(3)+ ", " + quat_xyzw[2].toFixed(3) +", " + quat_xyzw[3].toFixed(3);
 		// document.getElementById("cam_pose_status").style.color = "red";
-		options.debugText = "Cam pose INVALID";
+		// options.debugText = "Cam pose INVALID";
+		document.getElementById("debug").innerText = "Cam pose INVALID";
 		
 	}
-	options.tracking.time = pose["est_time"].toFixed(2);
+	// options.tracking.time = pose["est_time"].toFixed(2);
     // document.getElementById("trackingtime").innerHTML = "Tracking time: "+pose["est_time"].toFixed(2);
     // if (pose["est_time"] > 30) {
     //     document.getElementById("trackingtime").style.color = "red";
@@ -339,7 +304,6 @@ async function estimatePoseAruco() {
 
 init();
 render();
-initDebugGUI();
 
 window.addEventListener("beforeunload",stopCamera);
 

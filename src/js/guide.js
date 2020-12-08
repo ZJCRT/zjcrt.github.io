@@ -1,7 +1,6 @@
 import * as THREE from '../js_libs/three.module.js';
 import * as VideoScene from './guide_video.js';
 
-VideoScene.debugGUI.close();
 VideoScene.renderer.setAnimationLoop(onRender);
 displayOverlay("loading");
 
