@@ -207,7 +207,7 @@ let camera_matrix, dist_coeffs;
 let camera_initialized = false;
 let init_scene = {};
 
-async function estimateCameraIntrinsics() {
+async function estimateCameraIntrinsics(callback) {
 	canvas.width = videoTexture.image.videoWidth;
 	canvas.height = videoTexture.image.videoHeight;
 
@@ -219,11 +219,16 @@ async function estimateCameraIntrinsics() {
     const aruco_points = await cv_service.extractArucoForCalib(
         {"image" : imageData, "view_id" : options.cameraCalibration.cur_view_id, "use_new_board" : options.cameraCalibration.use_new_board_checker});
 
+	let remainingImages = options.cameraCalibration.min_init_images-aruco_points.data.payload["view_id"]-1;
+	
     if (aruco_points.data.payload["has_motion_blur"]) {
         // document.getElementById("log").style.color = 'red';
 		// document.getElementById("log").innerHTML = "Motion blur too high. Move slowly!";
 		options.debugText = "Motion blur too high. Move slowly!";
-        camera_initialized = false;
+		camera_initialized = false;
+		
+		remainingImages = options.cameraCalibration.min_init_images-options.cameraCalibration.cur_view_id;
+		callback(remainingImages, true);
     } else {
         options.cameraCalibration.cur_view_id += 1;
         // document.getElementById("log").style.color = 'green';
@@ -256,7 +261,7 @@ async function estimateCameraIntrinsics() {
         //     (min_init_images-aruco_points.data.payload["view_id"])+" images!";
         // document.getElementById("log").style.color = "green";
 
-        if (aruco_points.data.payload["view_id"] >= options.cameraCalibration.min_init_images) {
+        if (aruco_points.data.payload["view_id"] == options.cameraCalibration.min_init_images-1) {
 			camera_initialized = true;
 			options.debugText = "Camera initialized. You can start tracking now!";
             // document.getElementById("log").innerHTML = "Camera initialized. You can start tracking now!";
@@ -280,7 +285,10 @@ async function estimateCameraIntrinsics() {
 			trackingGUI.add(options.tracking, 'time').listen();
 			trackingGUI.add(options.tracking, 'run_interval').listen();
 			trackingGUI.open();
-        }
+			console.log("calib done");
+		}
+		
+		callback(remainingImages);
     }
 }
 
