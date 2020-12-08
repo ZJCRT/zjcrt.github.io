@@ -2,7 +2,7 @@ import * as THREE from '../js_libs/three.module.js';
 import { GUI } from '../js_libs/dat.gui.module.js';
 import cv_service from '../services/cv_service.js';
 
-export{cv_service, debugGUI, options, estimateCameraIntrinsics};
+export{cv_service, debugGUI, options, scene, render_camera, estimateCameraIntrinsics, renderer};
 
 let video, videoTexture, videoMesh;
 let renderer, scene, render_camera, rendercanvas;
@@ -86,7 +86,7 @@ function initDebugGUI(){
 function init() {
 
 	//Camera will be updated as soon as it is calibrated -> updateCameraChange()
-	render_camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight,0.1,100);
+	render_camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight,0.01,100);
 	render_camera.position.z = 0.5;
 
 	scene = new THREE.Scene();
@@ -173,7 +173,6 @@ function updateCameraChange(){
 		videoMesh.position.z = -1 * options.dimensions.planebuffer.width / (2 * Math.tan (hFOV/2));
 	}
 }
-
 
 function render(){
 	requestAnimationFrame(render);
@@ -314,6 +313,9 @@ async function estimatePoseAruco() {
         //     quat_xyzw[0].toFixed(3) + ", " + quat_xyzw[1].toFixed(3)+ ", " + quat_xyzw[2].toFixed(3) +", " + quat_xyzw[3].toFixed(3);
 		// document.getElementById("cam_pose_status").style.color = "green";
 		options.debugText = "";
+
+		render_camera.position.set(pose["position"][0], pose["position"][1], pose["position"][2]);        
+		render_camera.quaternion.copy(quaternion);
     } else {
         // document.getElementById("cam_pose_status").innerHTML = "Cam pose INVALID. Pose (xyz, qxqyqzqw): "+
         //     pose["position"][0].toFixed(3) + ", " + pose["position"][1].toFixed(3)+ ", " + pose["position"][2].toFixed(3) + ", " +
@@ -329,8 +331,7 @@ async function estimatePoseAruco() {
     // } else {
     //     document.getElementById("trackingtime").style.color = "green";
     // }
-    render_camera.position.set(pose["position"][0], pose["position"][1], pose["position"][2]);        
-	render_camera.quaternion.copy(quaternion);
+
 	
 	poseEstimationRunning = false;
 }
@@ -366,16 +367,6 @@ function takeImageAndDownload(){
 
 
 const check_l = 0.015;
-const glass_pos = [0.06, 0.06, 0.0]
-//// This is where we create our off-screen render target ////
-const g_area = [0.05,0.015,0.001]
-const glass_area = new THREE.BoxGeometry(g_area[0],g_area[1],g_area[2]);
-
-const material_transparent = new THREE.MeshBasicMaterial( { color: 0x00ffff, transparent : false } );
-const glass_cube = new THREE.Mesh(glass_area, material_transparent)
-glass_cube.position.set(glass_pos[0]-g_area[0]/2,glass_pos[1]-g_area[1]/2,g_area[2]/2.0);
-
-scene.add(glass_cube);
 
 // draw coordinate system
 const red_line = new THREE.LineBasicMaterial({color: 0xff0000, linewidth: 2});
