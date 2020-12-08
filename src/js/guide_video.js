@@ -2,6 +2,7 @@ import * as THREE from '../js_libs/three.module.js';
 import { GUI } from '../js_libs/dat.gui.module.js';
 import cv_service from '../services/cv_service.js';
 
+export{cv_service, debugGUI, options, estimateCameraIntrinsics};
 
 let video, videoTexture, videoMesh;
 let renderer, scene, render_camera, rendercanvas;
@@ -16,7 +17,7 @@ var mediaConstraints = {
 };
 
 const debugGUI = new GUI();
-export {debugGUI};
+
 let calibGUI, dimGUI;
 
 let options = {
@@ -126,14 +127,28 @@ function init() {
 	cv_service.loadArucoWebWorker();
 
 	//wait until openCV is loaded ... then display dialog
-    cv_service.worker.addEventListener('message', function(e){
-        if(e.data.msg=="load"){
-			options.openCV_ready = true;
+    // cv_service.worker.addEventListener('message', function(e){
+    //     if(e.data.msg=="load"){
 			
-            calibGUI.add(options.cameraCalibration, 'takeCalibImage').listen();
-			calibGUI.open();
+	// 	}
+	// },false);
+	addOpenCVLoadListener(openCVLoaded);
+}
+
+export {addOpenCVLoadListener};
+function addOpenCVLoadListener(callback){
+	cv_service.worker.addEventListener('message', function(e){
+        if(e.data.msg=="load"){
+			callback();
 		}
     },false);
+}
+
+function openCVLoaded(){
+	options.openCV_ready = true;
+			
+	calibGUI.add(options.cameraCalibration, 'takeCalibImage').listen();
+	calibGUI.open();
 }
 
 function stopCamera() {
@@ -191,7 +206,6 @@ let ctx = canvas.getContext('2d');
 let camera_matrix, dist_coeffs;
 let camera_initialized = false;
 let init_scene = {};
-
 
 async function estimateCameraIntrinsics() {
 	canvas.width = videoTexture.image.videoWidth;
