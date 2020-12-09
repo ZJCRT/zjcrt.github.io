@@ -10,8 +10,8 @@ let mindist = 0.05;
 let arObjects = [];
 let curve, arrowHelper;
 
-let arucoarea_height = 0.2225
-let arucoarea_width = 0.1405
+let arucoarea_height = 0.2148
+let arucoarea_width = 0.1397
 let radius_x = 0.15;
 let radius_y = 0.15
 let z_layer_top = 0.2;
@@ -258,8 +258,8 @@ function displayMarkerboardAugmentation(visible){
       //markerboard.translateX(-0.042);
       //markerboard.translateY(-0.047);
 
-      markerboard.translateX(-0.0607);
-      markerboard.translateY(-0.04249);
+      markerboard.translateX(-0.0609);
+      markerboard.translateY(-0.04435);
 
       VideoScene.scene.add( markerboard );
 
