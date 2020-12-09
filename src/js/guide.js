@@ -10,13 +10,22 @@ let mindist = 0.05;
 let arObjects = [];
 let curve, arrowHelper;
 
-// "Corners" of the Scan Path
-let top_left = new THREE.Vector3(-0.2,0,0.15);
-let top_center = new THREE.Vector3(0,0, 0.2);
-let top_right = new THREE.Vector3(0.2,0,0.15);
-let front_center = new THREE.Vector3(0,-0.2,0.15);
-let front_left = new THREE.Vector3(-0.2,-0.2,0.15);
-let front_right = new THREE.Vector3(0.2,-0.2,0.15);
+let arucoarea_height = 0.2225
+let arucoarea_width = 0.1405
+let radius_x = 0.15;
+let radius_y = 0.15
+let z_layer_top = 0.2;
+let z_layer_bottom = 0.15;
+
+let top_center = new THREE.Vector3(arucoarea_width/2,arucoarea_height/2, z_layer_top);
+
+let top_left = new THREE.Vector3(top_center.x-radius_x,top_center.y,z_layer_bottom);
+let top_right = new THREE.Vector3(top_center.x+radius_x,top_center.y,z_layer_bottom);
+
+let front_center = new THREE.Vector3(top_center.x,top_center.y-radius_y,z_layer_bottom);
+
+let front_left = new THREE.Vector3(front_center.x-radius_x,front_center.y,front_center.z);
+let front_right = new THREE.Vector3(front_center.x+radius_x,front_center.y,front_center.z);
 
 const initialPoints = [
     top_center, top_left, top_center, top_right, top_center, front_center, front_left, front_center, front_right, front_center
@@ -245,8 +254,12 @@ function displayMarkerboardAugmentation(visible){
       let material = new THREE.MeshBasicMaterial( {color: boardcolor_nottracked, transparent: true, opacity: 0.5, side: THREE.DoubleSide} );
       markerboard = new THREE.Mesh( geometry, material );
       markerboard.position.set(markerboardwidth/2,markerboardheight/2,0);
-      markerboard.translateX(-0.042);
-      markerboard.translateY(-0.047);
+      //old markerboard
+      //markerboard.translateX(-0.042);
+      //markerboard.translateY(-0.047);
+
+      markerboard.translateX(-0.0607);
+      markerboard.translateY(-0.04249);
 
       VideoScene.scene.add( markerboard );
 

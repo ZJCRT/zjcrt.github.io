@@ -25,7 +25,7 @@ let options = {
 		},
 	},
 	cameraCalibration: {
-		use_new_board_checker: false,
+		use_new_board_checker: true,
 		cur_view_id: 0,
 		min_init_images: 2,
 		fx: 0,
@@ -180,6 +180,7 @@ async function estimateCameraIntrinsics(callback) {
 	ctx.drawImage(videoTexture.image, 0, 0);
 	const imageData = ctx.getImageData(0,0,videoTexture.image.videoWidth,videoTexture.image.videoHeight);
 
+	console.log("Use new checkerboard: "+options.cameraCalibration.use_new_board_checker);
     // extract aruco markers
     const aruco_points = await cv_service.extractArucoForCalib(
         {"image" : imageData, "view_id" : options.cameraCalibration.cur_view_id, "use_new_board" : options.cameraCalibration.use_new_board_checker});
