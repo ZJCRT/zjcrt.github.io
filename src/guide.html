@@ -25,5 +25,29 @@
         </div>
         <div id="debug"></div>
         <div id="fps"></div>
+
+        <div class="modal" tabindex="-1" role="dialog" id="scaleDialog">
+          <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Markerboard scale</h5>
+                <!--<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>-->
+              </div>
+              <div class="modal-body">
+                <p>Please measure the width of the red line along the 3 markers:</p>
+                <div class="form-group">
+                  <label for="dist_to_measure">width (in meters)</label>
+                  <input type="number" class="form-control" id="dist_to_measure" placeholder="0.125" value="0.9">
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button id="submitbtn" type="button" class="btn btn-primary">OK</button>
+                <!--<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>-->
+              </div>
+            </div>
+          </div>
+        </div>
     </body>
 </html>

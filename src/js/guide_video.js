@@ -1,7 +1,7 @@
 import * as THREE from '../js_libs/three.module.js';
 import cv_service from '../services/cv_service.js';
 
-export{cv_service, options, scene, render_camera, estimateCameraIntrinsics, renderer};
+export{cv_service, options, scene, render_camera, estimateCameraIntrinsics, renderer, setDistToMeasure};
 
 let video, videoTexture, videoMesh;
 let renderer, scene, render_camera, rendercanvas;
@@ -49,6 +49,10 @@ let options = {
 	debugText: ""
 };
 
+function setDistToMeasure(dist){
+	dist_to_measure = dist;
+	console.log("dist_to_measure: "+dist_to_measure);
+}
 
 function init() {
 
@@ -172,6 +176,8 @@ let camera_matrix, dist_coeffs;
 let camera_initialized = false;
 let init_scene = {};
 
+let dist_to_measure = 0.138;//0.12450001;
+
 async function estimateCameraIntrinsics(callback) {
 	canvas.width = videoTexture.image.videoWidth;
 	canvas.height = videoTexture.image.videoHeight;
@@ -183,7 +189,7 @@ async function estimateCameraIntrinsics(callback) {
 	console.log("Use new checkerboard: "+options.cameraCalibration.use_new_board_checker);
     // extract aruco markers
     const aruco_points = await cv_service.extractArucoForCalib(
-        {"image" : imageData, "view_id" : options.cameraCalibration.cur_view_id, "use_new_board" : options.cameraCalibration.use_new_board_checker});
+        {"image" : imageData, "view_id" : options.cameraCalibration.cur_view_id, "use_new_board" : options.cameraCalibration.use_new_board_checker, "dist_to_measure": dist_to_measure});
 
 	let remainingImages = options.cameraCalibration.min_init_images-aruco_points.data.payload["view_id"]-1;
 	
@@ -266,7 +272,7 @@ async function estimatePoseAruco() {
 	const imageData = ctx.getImageData(0,0,videoTexture.image.videoWidth,videoTexture.image.videoHeight);
 
     const pose_payload = await cv_service.poseEstimation(
-        {"image" : imageData, "camera_matrix" : camera_matrix, "dist_coeffs" : dist_coeffs, "use_new_board": options.cameraCalibration.use_new_board_checker});
+        {"image" : imageData, "camera_matrix" : camera_matrix, "dist_coeffs" : dist_coeffs, "use_new_board": options.cameraCalibration.use_new_board_checker, "dist_to_measure": dist_to_measure});
     const pose = pose_payload.data.payload;
     const quat_xyzw = pose["quaternion_xyzw"];
     const quaternion = new THREE.Quaternion().set(quat_xyzw[0],quat_xyzw[1],quat_xyzw[2],quat_xyzw[3]).normalize();
@@ -307,7 +313,6 @@ init();
 render();
 
 window.addEventListener("beforeunload",stopCamera);
-
 
 // Debug-Stuff beyond this line
 

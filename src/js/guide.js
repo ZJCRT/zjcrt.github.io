@@ -2,7 +2,7 @@ import * as THREE from '../js_libs/three.module.js';
 import * as VideoScene from './guide_video.js';
 
 VideoScene.renderer.setAnimationLoop(onRender);
-displayOverlay("loading");
+
 
 let mindist = 0.05;
 
@@ -50,7 +50,8 @@ let debug = true;
 var guide = new StateMachine({
     init: 'start',
     transitions: [
-      { name: 'startCalibration', from: 'start', to: 'calibratingCamera'},
+      {name: 'showScaleDialog', from: 'start', to: 'scaleModal'},
+      { name: 'startCalibration', from: 'scaleModal', to: 'calibratingCamera'},
       //{ name: 'playAnimation',     from: 'start',  to: 'playingAnimation' },
       { name: 'startGuide',     from: 'calibratingCamera',  to: 'scanningBG' },
       { name: 'scanLeftBG',   from: 'scanningBG', to: 'scanningLeftBG'  },
@@ -62,6 +63,9 @@ var guide = new StateMachine({
       { name: 'finish', from: 'scanningRightFront',    to: 'done' }
     ],
     methods: {
+      onShowScaleDialog: function(){
+        document.getElementById("scaleDialog").style.display = "block"; //display modal dialog to get scale from user
+      },
       onStartCalibration: function (){
         displayDialog("Calibrate your camera", "Please take "+VideoScene.options.cameraCalibration.min_init_images+" pictures from the markerboard.","Take picture 1/"+VideoScene.options.cameraCalibration.min_init_images);
       },
@@ -135,11 +139,6 @@ var guide = new StateMachine({
   };
 
   
-function onOpenCVLoaded(){
-  //console.log("openCV loaded");
-  guide.startCalibration();
-}
-
 function calibrationCallback(imagesLeft, motionBlur=false){
   console.log("imagesleft: "+imagesLeft+" "+motionBlur);
   if(imagesLeft>0){
@@ -292,3 +291,30 @@ function showArrow(dir, translateZ){
 
 VideoScene.addOpenCVLoadListener(onOpenCVLoaded);
 document.getElementById ("overlayWBButton").addEventListener ("click", handleClick);
+
+document.getElementById("submitbtn").addEventListener ("click", submitScale);
+guide.showScaleDialog();
+
+
+let dist_to_measure_set = false;
+let openCV_loaded = false;
+
+function onOpenCVLoaded(){
+  openCV_loaded = true;
+  //console.log("openCV loaded");
+  if(openCV_loaded && dist_to_measure_set){
+    guide.startCalibration();
+  }
+  
+}
+
+function submitScale(){
+  dist_to_measure_set = true;
+	VideoScene.setDistToMeasure(document.getElementById('dist_to_measure').value);
+  document.getElementById("scaleDialog").style.visibility = "hidden";
+  if(openCV_loaded && dist_to_measure_set){
+    guide.startCalibration();
+  } else {
+    displayOverlay("loading");
+  }
+}
