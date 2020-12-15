@@ -50,5 +50,6 @@ function extractArucoFullSize(gray_image, aruco_board, view_id_idx) {
               "image_size" : {width : gray_image.cols, height : gray_image.rows}};
     marker_corners.delete();
     marker_ids.delete();
+    parameters.delete();
     return result;
 }

@@ -34,6 +34,7 @@ function extractArucoForCalib({ msg, payload }) {
     marker_dict["laplacian_variance"] = is_blurry["laplacian_variance"];
     
     gray_image.delete();
+    input_image.delete();
     postMessage({ msg, payload: marker_dict});
 }
 
