@@ -1,4 +1,4 @@
-const ARUCO_BOARD = {
+const ARUCO_BOARD_OLD = {
   "points3d": {
     "0": [
       [

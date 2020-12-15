@@ -21,7 +21,7 @@ let field_of_view_render_cam = 45;
 let camera_initialized = false;
 let camera_matrix = null;
 let dist_coeffs = null;
-let run_interval = 30;
+let run_interval = 50;
 let render_cam_initialized = false;
 // setup a basic scene
 let scene = new THREE.Scene();
@@ -101,8 +101,9 @@ function initVideo(ev){
 async function estimatePoseAruco() {
     videoImageContext.drawImage(videoDom, 0, 0);
     const image_data = videoImageContext.getImageData(0, 0, width, height);
+    const use_new_board_checker = document.getElementById("new_aruco_board").checked;
     const pose_payload = await cv_service.poseEstimation(
-        {"image" : image_data, "camera_matrix" : camera_matrix, "dist_coeffs" : dist_coeffs});
+        {"image" : image_data, "camera_matrix" : camera_matrix, "dist_coeffs" : dist_coeffs, "use_new_board": use_new_board_checker});
     const pose = pose_payload.data.payload;
     const quat_xyzw = pose["quaternion_xyzw"];
     const quaternion = new THREE.Quaternion().set(quat_xyzw[0],quat_xyzw[1],quat_xyzw[2],quat_xyzw[3]).normalize();
@@ -146,7 +147,7 @@ function renderWorker() {
                 render_camera = new THREE.PerspectiveCamera(field_of_view_render_cam, width/height, 0.01, 2);
                 renderer.setSize(width, height);
                 start.disabled = true;
-                document.getElementById("video").style.display = "none"; // hide video
+                //document.getElementById("video").style.display = "none"; // hide video
                 render_cam_initialized = true;
             }
             if (camera_initialized) {
@@ -209,8 +210,10 @@ async function estimateCameraIntrinsics() {
     // get image from video context and send it to the aruco extraction worker
     videoImageContext.drawImage(videoDom, 0, 0);
     const imageData = videoImageContext.getImageData(0, 0, width, height);
+    const use_new_board_checker = document.getElementById("new_aruco_board").checked;
     // extract aruco markers
-    const aruco_points = await cv_service.extractArucoForCalib({"image" : imageData, "view_id" : cur_view_id});
+    const aruco_points = await cv_service.extractArucoForCalib(
+        {"image" : imageData, "view_id" : cur_view_id, "use_new_board" : use_new_board_checker});
 
     if (aruco_points.data.payload["has_motion_blur"]) {
         document.getElementById("log").style.color = 'red';

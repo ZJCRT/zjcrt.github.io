@@ -7,14 +7,11 @@ self.importScripts('./calibrate_camera.js');
 self.importScripts('./cv_utils.js');
 self.importScripts('./aruco_init.js');
 self.importScripts('../resource/aruco_board_definition.js');
+self.importScripts('../resource/new_aruco_board_definition.js');
 self.importScripts('./extract_aruco_markers_fullsize.js');
 self.importScripts('./find_points_in_glass.js');
 self.importScripts('./check_motion_blur.js');
 self.importScripts('./pose_estimation.js');
-
-const TRACKING_WIDTH = 480;
-const TRACKING_HEIGHT = 360;
-
 
 // extracts Aruco markers for camera calibration
 function extractArucoForCalib({ msg, payload }) {
@@ -23,7 +20,7 @@ function extractArucoForCalib({ msg, payload }) {
     let gray_image = new cv.Mat();
     cv.cvtColor(input_image, gray_image, cv.COLOR_RGBA2GRAY);
     const is_blurry = hasMotionBlur(gray_image);
-    let aruco_board = init_aruco();
+    let aruco_board = init_aruco(payload["use_new_board"]);
     let marker_dict = {};
     
     if (!is_blurry["has_motion_blur"]) {
@@ -53,7 +50,7 @@ function extractArucoForGlass({msg, payload}) {
     let gray_image = new cv.Mat();
     cv.cvtColor(input_image, gray_image, cv.COLOR_RGBA2GRAY);
     const is_blurry = hasMotionBlur(gray_image);
-    let aruco_board = init_aruco();
+    let aruco_board = init_aruco(payload["use_new_board"]);
 
     let marker_dict = {};
     let segmented_markers = {};
@@ -91,20 +88,12 @@ function estimateInitialCamera({ msg, payload }) {
 function poseEstimation({ msg, payload }) {
     const input_image = cv.matFromImageData(payload["image"]);
     let gray_image = new cv.Mat();
-    let aruco_board = init_aruco();
+    let aruco_board = init_aruco(payload["use_new_board"]);
 
     // "video" is the id of the video tag
     cv.cvtColor(input_image, gray_image, cv.COLOR_RGBA2GRAY);
-    const original_w = gray_image.cols;
-    // resize to tracking size
-    cv.resize(gray_image, gray_image, {width:TRACKING_WIDTH, height:TRACKING_HEIGHT});
-    let camera_matrix = payload["camera_matrix"];
-    const downsample_f = TRACKING_WIDTH / original_w;
-    camera_matrix[0] *= downsample_f;
-    camera_matrix[2] *= downsample_f;
-    camera_matrix[4] *= downsample_f;
-    camera_matrix[5] *= downsample_f;
-    const return_pose = poseEstimationSub(gray_image, camera_matrix, payload["dist_coeffs"], aruco_board);
+
+    const return_pose = poseEstimationSub(gray_image, payload["camera_matrix"], payload["dist_coeffs"], aruco_board);
     gray_image.delete();
     input_image.delete();
     postMessage({ msg, payload: return_pose});
@@ -189,7 +178,7 @@ self.onmessage = function (evt) {
     }
     case 'poseEstimation':
         return poseEstimation(evt.data);
-      
+
     case 'extractArucoForCalib':
         return extractArucoForCalib(evt.data);
       

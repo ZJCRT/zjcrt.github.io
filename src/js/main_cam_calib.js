@@ -105,8 +105,10 @@ async function takeImage() {
     const imageData = videoImageContext.getImageData(0, 0, width, height);
     document.getElementById("extract_status").innerHTML = "Start aruco extraction of new frame.";
     let startTime = performance.now();
+    const use_new_board_checker = document.getElementById("new_aruco_board").checked;
     // extract aruco markers
-    const aruco_points = await cv_service.extractArucoForCalib({"image" : imageData, "view_id" : cur_view_id});
+    const aruco_points = await cv_service.extractArucoForCalib(
+        {"image" : imageData, "view_id" : cur_view_id, "use_new_board": use_new_board_checker});
 
     var time_diff = performance.now() - startTime; //in ms 
     document.getElementById("extract_status").innerHTML = "Finished aruco extraction of new frame in "+time_diff.toFixed(2)+"ms.";
@@ -173,8 +175,10 @@ async function takeInitImage() {
     const imageData = videoImageContext.getImageData(0, 0, width, height);
     document.getElementById("extract_status").innerHTML = "Start aruco extraction of new frame.";
     let startTime = performance.now();
+    const use_new_board_checker = document.getElementById("new_aruco_board").checked;
     // extract aruco markers
-    const aruco_points = await cv_service.extractArucoForCalib({"image" : imageData, "view_id" : cur_view_id});
+    const aruco_points = await cv_service.extractArucoForCalib(
+        {"image" : imageData, "view_id" : cur_view_id, "use_new_board": use_new_board_checker});
     var time_diff = performance.now() - startTime; //in ms 
     document.getElementById("extract_status").innerHTML = "Finished aruco extraction of new frame in "+time_diff.toFixed(2)+"ms.";
     document.getElementById("laplacian_blur").innerHTML = "Laplacian variance blur level: "+aruco_points.data.payload["laplacian_variance"].toFixed(2);
