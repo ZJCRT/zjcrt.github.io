@@ -6,6 +6,20 @@ export{cv_service, options, scene, render_camera, estimateCameraIntrinsics, rend
 let video, videoTexture, videoMesh;
 let renderer, scene, render_camera, rendercanvas;
 
+// canvas to pass image into openCV
+let canvas = document.createElement('canvas');
+let ctx = canvas.getContext('2d');
+
+// camera calibration
+let camera_matrix, dist_coeffs;
+let camera_initialized = false;
+let init_scene = {};
+
+let dist_to_measure = 0.14; //width of markerboard (measured by user), in meters;
+
+let poseEstimationRunning = false; // is the webworker currently bussy
+const poseTimes = []; // stores timestamps to calculate FPS of pose estimation
+
 var mediaConstraints = {
     audio: false,
     video: {
@@ -32,34 +46,24 @@ let options = {
 		fy: 0,
 		cx: 0,
 		cy: 0,
-		fov: 0,
-		takeCalibImage: function() {
-			estimateCameraIntrinsics();
-			
-		},
-		takeImageAndDownload: function(){
-			takeImageAndDownload();
-		}
+		fov: 0
 	},
 	tracking: {
 		time: 0,
 		run_interval: 60
-	},
-
-	debugText: ""
+	}
 };
 
+// To get the scale from the markerboard right, the user has to measure the width of the markerboard (red line)
 function setDistToMeasure(dist){
 	dist_to_measure = dist;
-	console.log("dist_to_measure: "+dist_to_measure);
 }
 
 function init() {
-
 	//Camera will be updated as soon as it is calibrated -> updateCameraChange()
 	render_camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight,0.01,100);
 	render_camera.position.z = 0.5;
-
+	
 	scene = new THREE.Scene();
 
 	video =  document.getElementById("video");
@@ -78,13 +82,17 @@ function init() {
 	renderer = new THREE.WebGLRenderer({canvas: rendercanvas, antialias: true});
 	renderer.setSize(window.innerWidth, window.innerHeight);
 
+	console.log("init...");
+	console.log(`init camera settings to fov: ${render_camera.fov}, aspect:  ${render_camera.aspect}`);
+	console.log(render_camera);
+	console.log(renderer);
+	console.log(videoMesh);
+
 	updateCameraChange();
 
 	//Get Camerastream
 	if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
 		navigator.mediaDevices.getUserMedia(mediaConstraints).then(function(stream){
-			//console.log("VideoTrackSettings: ");
-			//console.log(stream.getVideoTracks()[0].getSettings());
 			video.srcObject = stream;
 			video.play();
 		}).catch(function(error){
@@ -97,12 +105,7 @@ function init() {
 	// load webworker
 	cv_service.loadArucoWebWorker();
 
-	//wait until openCV is loaded ... then display dialog
-    // cv_service.worker.addEventListener('message', function(e){
-    //     if(e.data.msg=="load"){
-			
-	// 	}
-	// },false);
+	//wait until openCV is loaded ... 
 	addOpenCVLoadListener(openCVLoaded);
 }
 
@@ -134,50 +137,34 @@ function updateCameraChange(){
 	let vFOV = THREE.MathUtils.degToRad(render_camera.fov);
 
 	let aspect = options.dimensions.planebuffer.width / options.dimensions.planebuffer.height;
-	if(render_camera.aspect <= aspect ){
+	// if(render_camera.aspect <= aspect ){
 		videoMesh.position.z = -1 * options.dimensions.planebuffer.height / (2 * Math.tan (vFOV/2));
-	} else {
-		let hFOV = vFOV * render_camera.aspect;
-		videoMesh.position.z = -1 * options.dimensions.planebuffer.width / (2 * Math.tan (hFOV/2));
-	}
+	// } else {
+		// let hFOV = vFOV * render_camera.aspect;
+		// videoMesh.position.z = -1 * options.dimensions.planebuffer.width / (2 * Math.tan (hFOV/2));
+	// }
+	
+	
+	// TODO to fill the screen render_camera.zoom = 1.4;
+	console.log(`update camera change fov: ${render_camera.fov}, aspect:  ${render_camera.aspect}, videoMesh.position.z: ${videoMesh.position.z}, zoom: ${render_camera.zoom}, focalLength: ${render_camera.getFocalLength()}`);
+	// render_camera.zoom = 1.5;
+	console.log(`update camera change fov: ${render_camera.fov}, aspect:  ${render_camera.aspect}, videoMesh.position.z: ${videoMesh.position.z}, zoom: ${render_camera.zoom},  focalLength: ${render_camera.getFocalLength()}`);
+	console.log(render_camera);
+	console.log(renderer);
+	console.log(videoMesh);
 }
 
 function render(){
-
 	requestAnimationFrame(render);
 
 	if(camera_initialized && ! poseEstimationRunning){
-		console.log("go");
 		estimatePoseAruco();
 	}
 
 	renderer.render(scene,render_camera);
 }
 
-// let loopIndex = 0;
-
-// function renderWorker() {
-//     // Processing image
-//     loopIndex = setInterval(
-//         function(){ 
-//             if (camera_initialized) {
-//                 estimatePoseAruco();
-//             }
-//         }, options.tracking.run_interval);
-// }
-
-
 //###### Calibration
-
-let canvas = document.createElement('canvas');
-let ctx = canvas.getContext('2d');
-
-let camera_matrix, dist_coeffs;
-let camera_initialized = false;
-let init_scene = {};
-
-let dist_to_measure = 0.138;//0.12450001;
-
 async function estimateCameraIntrinsics(callback) {
 	canvas.width = videoTexture.image.videoWidth;
 	canvas.height = videoTexture.image.videoHeight;
@@ -193,21 +180,15 @@ async function estimateCameraIntrinsics(callback) {
 
 	let remainingImages = options.cameraCalibration.min_init_images-aruco_points.data.payload["view_id"]-1;
 	
-    if (aruco_points.data.payload["has_motion_blur"]) {
-        // document.getElementById("log").style.color = 'red';
-		// document.getElementById("log").innerHTML = "Motion blur too high. Move slowly!";
-		options.debugText = "Motion blur too high. Move slowly!";
+    if (aruco_points.data.payload["has_motion_blur"]) { // Motion blur too high. Move slowly!
 		camera_initialized = false;
 		
 		remainingImages = options.cameraCalibration.min_init_images-options.cameraCalibration.cur_view_id;
 		callback(remainingImages, true);
     } else {
         options.cameraCalibration.cur_view_id += 1;
-        // document.getElementById("log").style.color = 'green';
-		// document.getElementById("log").innerHTML = "Motion blur ok. Saving image and estimating camera intrinsics!";
-		// options.debugText = "Motion blur ok. Saving image and estimating camera intrinsics!";
-        
-        const view_id = "view_"+aruco_points.data.payload["view_id"]
+		const view_id = "view_"+aruco_points.data.payload["view_id"]
+		
         // background_scene is global
         init_scene[view_id] = {};
         init_scene[view_id]["obj_pts"] = aruco_points.data.payload["obj_pts_js"];
@@ -221,27 +202,13 @@ async function estimateCameraIntrinsics(callback) {
         options.cameraCalibration.cy = camera.data.payload["camera_matrix"][1][2];
         camera_matrix = [options.cameraCalibration.fx, 0.0, options.cameraCalibration.cx, 0.0, options.cameraCalibration.fy, options.cameraCalibration.cy, 0.0, 0.0, 1.0];
         dist_coeffs = [ 0.0, 0.0, 0.0, 0.0, 0.0];
-        // document.getElementById('initial_cam_params').innerHTML = 
-        //     "Initial camera parameters: "+fx.toFixed(2)+", "+fy.toFixed(2)+", "+cx.toFixed(2)+", "+cy.toFixed(2);
 
         options.cameraCalibration.fov = 2.0 * Math.atan(videoTexture.image.videoHeight / (2.0*options.cameraCalibration.fy)) * 180.0 / Math.PI;
-		// document.getElementById('FoV').innerHTML = "Vertical field of view initialized with: "+field_of_view_render_cam.toFixed(2);
 
-		options.debugText= "Take another "+
-		(options.cameraCalibration.min_init_images-aruco_points.data.payload["view_id"])+" images!";
-        // document.getElementById("log").innerHTML = "Camera initializing. Move it around and take another "+
-        //     (min_init_images-aruco_points.data.payload["view_id"])+" images!";
-        // document.getElementById("log").style.color = "green";
-
-        if (aruco_points.data.payload["view_id"] == options.cameraCalibration.min_init_images-1) {
+        if (aruco_points.data.payload["view_id"] == options.cameraCalibration.min_init_images-1) { // Camera initialized
 			camera_initialized = true;
-			options.debugText = "Camera initialized. You can start tracking now!";
-            // document.getElementById("log").innerHTML = "Camera initialized. You can start tracking now!";
-			// document.getElementById("log").style.color = "green";
-			render_camera.fov = options.cameraCalibration.fov;
-			render_camera.aspect = videoTexture.image.videoWidth/videoTexture.image.videoHeight;
 			
-
+			render_camera.fov = options.cameraCalibration.fov;
 			updateCameraChange();
 		}
 		
@@ -249,12 +216,8 @@ async function estimateCameraIntrinsics(callback) {
     }
 }
 
-let poseEstimationRunning = false;
-//just to count fps of pose estimation
-const poseTimes = [];
-	
 
-// send image data to the webworker
+// send image data to the webworker and get camera pose
 async function estimatePoseAruco() {
 	
 	//just fps calculations
@@ -277,65 +240,32 @@ async function estimatePoseAruco() {
     const quat_xyzw = pose["quaternion_xyzw"];
     const quaternion = new THREE.Quaternion().set(quat_xyzw[0],quat_xyzw[1],quat_xyzw[2],quat_xyzw[3]).normalize();
 
+	// Is camera pose valid?
     if (pose["valid"]) {
-        // document.getElementById("cam_pose_status").innerHTML = "Cam pose VALID. Pose (xyz, qxqyqzqw): "+
-        //     pose["position"][0].toFixed(3) + ", " + pose["position"][1].toFixed(3)+ ", " + pose["position"][2].toFixed(3) + ", " + 
-        //     quat_xyzw[0].toFixed(3) + ", " + quat_xyzw[1].toFixed(3)+ ", " + quat_xyzw[2].toFixed(3) +", " + quat_xyzw[3].toFixed(3);
-		// document.getElementById("cam_pose_status").style.color = "green";
-		// options.debugText = "";
-
 		render_camera.position.set(pose["position"][0], pose["position"][1], pose["position"][2]);        
 		render_camera.quaternion.copy(quaternion);
+
 		document.getElementById("debug").innerText = "";
     } else {
-        // document.getElementById("cam_pose_status").innerHTML = "Cam pose INVALID. Pose (xyz, qxqyqzqw): "+
-        //     pose["position"][0].toFixed(3) + ", " + pose["position"][1].toFixed(3)+ ", " + pose["position"][2].toFixed(3) + ", " +
-        //     quat_xyzw[0].toFixed(3) + ", " + quat_xyzw[1].toFixed(3)+ ", " + quat_xyzw[2].toFixed(3) +", " + quat_xyzw[3].toFixed(3);
-		// document.getElementById("cam_pose_status").style.color = "red";
-		// options.debugText = "Cam pose INVALID";
 		document.getElementById("debug").innerText = "Cam pose INVALID";
-		
 	}
 	// options.tracking.time = pose["est_time"].toFixed(2);
-    // document.getElementById("trackingtime").innerHTML = "Tracking time: "+pose["est_time"].toFixed(2);
-    // if (pose["est_time"] > 30) {
-    //     document.getElementById("trackingtime").style.color = "red";
-    // } else {
-    //     document.getElementById("trackingtime").style.color = "green";
-    // }
-
-	
 	poseEstimationRunning = false;
 }
 
 
+
+// RUN 
 init();
 render();
 
-window.addEventListener("beforeunload",stopCamera);
+window.addEventListener("beforeunload",stopCamera); // not sure if this is necessary
+
+
+
+
 
 // Debug-Stuff beyond this line
-
-//test images
-function takeImageAndDownload(){
-
-	var tmp = document.createElement('canvas');
-	tmp.getContext('2d').drawImage(videoTexture.image, canvas.width, canvas.height);
-	
-    //create img
-    var img = document.createElement('img');
-    img.setAttribute('src', tmp.toDataURL());
-
-    var myWindow = window.open("", "MsgWindow");
-    myWindow.document.write(
-        `<h1>took image with ${tmp.width}x${tmp.height}<br/>
-        <a href="${img.src}" download>Download</a><br/></h1>
-    `)
-    myWindow.document.body.appendChild(tmp);    
-}
-
-
-
 const check_l = 0.015;
 
 // draw coordinate system
