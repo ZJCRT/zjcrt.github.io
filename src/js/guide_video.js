@@ -135,23 +135,13 @@ function stopCamera() {
 function updateCameraChange(){
 	render_camera.updateProjectionMatrix();
 	let vFOV = THREE.MathUtils.degToRad(render_camera.fov);
+	// let hFOV = vFOV * render_camera.aspect;
 
-	let aspect = options.dimensions.planebuffer.width / options.dimensions.planebuffer.height;
-	// if(render_camera.aspect <= aspect ){
-		videoMesh.position.z = -1 * options.dimensions.planebuffer.height / (2 * Math.tan (vFOV/2));
-	// } else {
-		// let hFOV = vFOV * render_camera.aspect;
-		// videoMesh.position.z = -1 * options.dimensions.planebuffer.width / (2 * Math.tan (hFOV/2));
-	// }
-	
-	
-	// TODO to fill the screen render_camera.zoom = 1.4;
-	console.log(`update camera change fov: ${render_camera.fov}, aspect:  ${render_camera.aspect}, videoMesh.position.z: ${videoMesh.position.z}, zoom: ${render_camera.zoom}, focalLength: ${render_camera.getFocalLength()}`);
-	// render_camera.zoom = 1.5;
-	console.log(`update camera change fov: ${render_camera.fov}, aspect:  ${render_camera.aspect}, videoMesh.position.z: ${videoMesh.position.z}, zoom: ${render_camera.zoom},  focalLength: ${render_camera.getFocalLength()}`);
-	console.log(render_camera);
-	console.log(renderer);
-	console.log(videoMesh);
+	videoMesh.position.z = -1 * options.dimensions.planebuffer.height / (2 * Math.tan (vFOV/2));
+
+	// TODO fill the screen on all devices that have a different aspect ratio than 9:16 
+	// render_camera.zoom = 1.4; // works on iPad Pro
+	// console.log(`update camera change fov: ${render_camera.fov}, aspect:  ${render_camera.aspect}, videoMesh.position.z: ${videoMesh.position.z}, zoom: ${render_camera.zoom},  focalLength: ${render_camera.getFocalLength()}`);
 }
 
 function render(){
